@@ -1,0 +1,577 @@
+---
+# =============================================================================
+# Kubernetes ConfigMap
+# Contains application configuration, message schemas, and environment variables
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: neopay-config
+  namespace: neopay
+  labels:
+    app: neopay
+    tier: platform
+data:
+  # ---------------------------------------------------------------------------
+  # Application Configuration
+  # ---------------------------------------------------------------------------
+  application.yml: |
+    spring:
+      application:
+        name: neopay-protocol-engineering
+      profiles:
+        active: ${SPRING_PROFILES_ACTIVE:production,kafka}
+      datasource:
+        url: jdbc:postgresql://${DB_HOST:neopay-postgres}:${DB_PORT:5432}/${DB_NAME:neopay_ledger}
+        username: ${DB_USERNAME:neopay_app}
+        password: ${DB_PASSWORD:}
+        driver-class-name: org.postgresql.Driver
+        hikari:
+          maximum-pool-size: 50
+          minimum-idle: 10
+          connection-timeout: 30000
+          idle-timeout: 600000
+          max-lifetime: 1800000
+          pool-name: neopay-hikari-pool
+      jpa:
+        properties:
+          hibernate:
+            dialect: org.hibernate.dialect.PostgreSQLDialect
+            jdbc:
+              batch_size: 50
+              time_zone: UTC
+            order_inserts: true
+            order_updates: true
+          org:
+            hibernate:
+              statistics: ${ENABLE_HIBERNATE_STATS:false}
+        open-in-view: false
+      redis:
+        host: ${REDIS_HOST:neopay-redis}
+        port: ${REDIS_PORT:6379}
+        password: ${REDIS_PASSWORD:}
+        timeout: 2000ms
+        lettuce:
+          pool:
+            max-active: 50
+            max-idle: 20
+            min-idle: 5
+            max-wait: 2000ms
+      kafka:
+        bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:neopay-kafka:9092}
+        consumer:
+          group-id: ${KAFKA_CONSUMER_GROUP:neopay-converter}
+          auto-offset-reset: earliest
+          enable-auto-commit: false
+          key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+          value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+          properties:
+            spring.json.trusted.packages: "*"
+        producer:
+          acks: 1
+          retries: 3
+          key-serializer: org.apache.kafka.common.serialization.StringSerializer
+          value-serializer: org.apache.kafka.common.serialization.StringSerializer
+        listener:
+          ack-mode: manual
+          concurrency: 6
+
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus,logfile
+          base-path: /actuator
+      endpoint:
+        health:
+          show-details: always
+          probes:
+            enabled: true
+          group:
+            readiness:
+              include: readinessState,db,redis,kafka
+            liveness:
+              include: livenessState
+      metrics:
+        export:
+          prometheus:
+            enabled: true
+        tags:
+          application: ${spring.application.name}
+        distribution:
+          percentiles-histogram:
+            http.server.requests: true
+          percentiles:
+            http.server.requests: 0.5,0.75,0.95,0.99
+      health:
+        readiness-state:
+          add-sample: 200
+        db:
+          enabled: true
+        redis:
+          enabled: true
+        kafka:
+          enabled: true
+
+    logging:
+      level:
+        root: ${LOGGING_LEVEL_ROOT:INFO}
+        com.neopay: ${LOGGING_LEVEL_NEOPAY:DEBUG}
+        org.springframework.kafka: INFO
+        org.hibernate.SQL: WARN
+        org.apache.kafka: WARN
+      pattern:
+        console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+      file:
+        name: /opt/neopay/logs/application.log
+        max-size: 100MB
+        max-history: 30
+
+  # ---------------------------------------------------------------------------
+  # ISO8583 Message Schemas
+  # ---------------------------------------------------------------------------
+  iso8583-hiso93-ascii.yaml: |
+    message_types:
+      800: "Network Management Request"
+      810: "Network Management Response"
+      820: "Network Management Information"
+      821: "Network Management Information Response"
+      1100: "Authorization Request"
+      1110: "Authorization Request Repeat"
+      1120: "Authorization Response"
+      1130: "Authorization Response Repeat"
+      1200: "Financial Request"
+      1210: "Financial Request Repeat"
+      1220: "Financial Response"
+      1230: "Financial Response Repeat"
+      1240: "Balances Response"
+      1300: "File Update Request"
+      1320: "File Update Response"
+      1340: "Balances Inquiry"
+      1400: "Reversal Request"
+      1420: "Reversal Response"
+      1500: "Reconciliation Request"
+      1520: "Reconciliation Response"
+      1700: "Administrative Request"
+      1720: "Administrative Response"
+      1800: "Collection Request"
+      1820: "Collection Response"
+      1900: "Fee Collection Request"
+      1920: "Fee Collection Response"
+    bitmaps:
+      primary: [2, 3, 4, 7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64]
+      secondary: [65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112]
+      tertiary: [113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128]
+    fields:
+      f002:
+        name: "Primary Account Number (PAN)"
+        length: 19
+        type: "NUMERIC"
+        required: true
+      f003:
+        name: "Processing Code"
+        length: 6
+        type: "NUMERIC"
+      f004:
+        name: "Transaction Amount"
+        length: 12
+        type: "NUMERIC"
+      f005:
+        name: "Settlement Amount"
+        length: 12
+        type: "NUMERIC"
+      f006:
+        name: "Cardholder Billing Amount"
+        length: 12
+        type: "NUMERIC"
+      f007:
+        name: "Transmission Date/Time"
+        length: 10
+        type: "NUMERIC"
+      f011:
+        name: "Systems Trace Audit Number (STAN)"
+        length: 6
+        type: "NUMERIC"
+      f012:
+        name: "Local Transaction Time"
+        length: 6
+        type: "NUMERIC"
+      f013:
+        name: "Local Transaction Date"
+        length: 4
+        type: "NUMERIC"
+      f014:
+        name: "Expiration Date"
+        length: 4
+        type: "NUMERIC"
+      f015:
+        name: "Settlement Date"
+        length: 4
+        type: "NUMERIC"
+      f016:
+        name: "Currency Conversion Date"
+        length: 4
+        type: "NUMERIC"
+      f018:
+        name: "Merchant Type"
+        length: 4
+        type: "NUMERIC"
+      f019:
+        name: "Acquiring Institution Country Code"
+        length: 3
+        type: "NUMERIC"
+      f022:
+        name: "Point of Service Entry Mode"
+        length: 3
+        type: "NUMERIC"
+      f025:
+        name: "Point of Service Condition Code"
+        length: 2
+        type: "NUMERIC"
+      f032:
+        name: "Acquiring Institution ID Code"
+        length: 11
+        type: "NUMERIC"
+      f033:
+        name: "Sending Institution ID Code"
+        length: 11
+        type: "NUMERIC"
+      f035:
+        name: "Track 2 Data"
+        length: 40
+        type: "NUMERIC"
+      f037:
+        name: "Retrieval Reference Number"
+        length: 12
+        type: "NUMERIC"
+      f038:
+        name: "Authorization ID Response"
+        length: 6
+        type: "NUMERIC"
+      f039:
+        name: "Response Code"
+        length: 2
+        type: "NUMERIC"
+      f041:
+        name: "Card Acceptor Terminal ID"
+        length: 8
+        type: "NUMERIC"
+      f042:
+        name: "Card Acceptor ID Code"
+        length: 15
+        type: "ALPHANUMERIC"
+      f043:
+        name: "Card Acceptor Name/Location"
+        length: 40
+        type: "ALPHANUMERIC"
+      f048:
+        name: "Additional Data (Private)"
+        length: 100
+        type: "ALPHANUMERIC"
+      f049:
+        name: "Currency Code"
+        length: 3
+        type: "ALPHANUMERIC"
+      f050:
+        name: "Settlement Currency Code"
+        length: 3
+        type: "ALPHANUMERIC"
+      f052:
+        name: "PIN Block"
+        length: 16
+        type: "NUMERIC"
+      f055:
+        name: "ICC Data"
+        length: 255
+        type: "ALPHANUMERIC"
+      f057:
+        name: "Authorization Code"
+        length: 6
+        type: "ALPHANUMERIC"
+      f063:
+        name: "Transaction Life Cycle ID"
+        length: 96
+        type: "ALPHANUMERIC"
+      f070:
+        name: "Auto-generated Billing ID"
+        length: 3
+        type: "NUMERIC"
+      f073:
+        name: "Action Date"
+        length: 6
+        type: "NUMERIC"
+      f097:
+        name: "Agent Financial Institution ID"
+        length: 17
+        type: "ALPHANUMERIC"
+      f100:
+        name: "Sending Node ID"
+        length: 20
+        type: "ALPHANUMERIC"
+      f102:
+        name: "Account ID 1"
+        length: 28
+        type: "ALPHANUMERIC"
+      f103:
+        name: "Account ID 2"
+        length: 28
+        type: "ALPHANUMERIC"
+      f123:
+        name: "Additional Node Data"
+        length: 50
+        type: "ALPHANUMERIC"
+      f127:
+        name: "Network Data"
+        length: 160
+        type: "ALPHANUMERIC"
+
+  # ---------------------------------------------------------------------------
+  # ISO20022 MX Message Schemas
+  # ---------------------------------------------------------------------------
+  iso20022-mx-schemas.yaml: |
+    pain.001.001.03:
+      name: "Customer Credit Transfer Initiation V03"
+      root_element: "Document"
+      namespace: "urn:iso:std:iso:20022:tech:xsd:pain.001.001.03"
+      required_fields:
+        - "GrpHdr/MsgId"
+        - "GrpHdr/CreDtTm"
+        - "GrpHdr/NbOfTxs"
+        - "GrpHdr/CtrlSum"
+        - "GrpHdr/InitgPty"
+        - "PmtInf/CdtTrfTxInf"
+    pacs.008.001.08:
+      name: "Financial Initiation V08"
+      root_element: "Document"
+      namespace: "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08"
+      required_fields:
+        - "FiToFstCdtNtif/GrpHdr/MsgId"
+        - "FiToFstCdtNtif/GrpHdr/CreDtTm"
+        - "FiToFstCdtNtif/GrpHdr/NbOfTxs"
+        - "FiToFstCdtNtif/GrpHdr/SttlmInf"
+        - "FiToFstCdtNtif/CdtTrfTxInf"
+    pacs.002.001.10:
+      name: "Status Report V10"
+      root_element: "Document"
+      namespace: "urn:iso:std:iso:20022:tech:xsd:pacs.002.001.10"
+    camt.053.001.08:
+      name: "Bank-to-Customer Account Report V08"
+      root_element: "Document"
+      namespace: "urn:iso:std:iso:20022:tech:xsd:camt.053.001.08"
+
+  # ---------------------------------------------------------------------------
+  # HSM Key Configuration
+  # ---------------------------------------------------------------------------
+  hsm-config.yaml: |
+    hsm:
+      type: ${HSM_TYPE:thales_payshield}
+      host: ${HSM_HOST:neopay-hsm}
+      port: ${HSM_PORT:8888}
+      timeout: 5000
+      connection_pool_size: 10
+      max_retry_attempts: 3
+      retry_delay_ms: 100
+    lmk:
+      zone1_key: ${LMK_ZONE1_KEY:}
+      zone2_key: ${LMK_ZONE2_KEY:}
+      zone3_key: ${LMK_ZONE3_KEY:}
+    keys:
+      kek: ${HSM_KEK:}
+      mac_keys:
+        - name: "ISO8583_MAC_KEY"
+          length: 16
+          type: "DES"
+          usage: "AUTHENTICATION"
+      pin_keys:
+        - name: "PIN_VERIFICATION_KEY"
+          length: 16
+          type: "DES"
+          usage: "PIN_VERIFICATION"
+      data_keys:
+        - name: "DATA_ENCRYPTION_KEY"
+          length: 16
+          type: "DES"
+          usage: "ENCRYPTION"
+    commands:
+      allowed:
+        - "GENERATE_MAC"
+        - "VERIFY_MAC"
+        - "ENCRYPT_PIN"
+        - "DECRYPT_PIN"
+        - "TRANSLATE_PIN"
+        - "GENERATE_KEY"
+        - "IMPORT_KEY"
+        - "EXPORT_KEY"
+      denied:
+        - "EXPORT_LMK"
+        - "MODIFY_LMK"
+
+  # ---------------------------------------------------------------------------
+  # Kafka Topics Configuration
+  # ---------------------------------------------------------------------------
+  kafka-topics.yaml: |
+    topics:
+      - name: iso8583-ingress
+        partitions: 12
+        replication_factor: 3
+        retention_hours: 168
+        cleanup_policy: delete
+      - name: iso8583-egress
+        partitions: 12
+        replication_factor: 3
+        retention_hours: 168
+        cleanup_policy: delete
+      - name: settlements
+        partitions: 6
+        replication_factor: 3
+        retention_hours: 720
+        cleanup_policy: delete
+      - name: alerts
+        partitions: 3
+        replication_factor: 3
+        retention_hours: 24
+        cleanup_policy: delete
+      - name: authorization-events
+        partitions: 6
+        replication_factor: 3
+        retention_hours: 168
+        cleanup_policy: delete
+      - name: reversal-events
+        partitions: 3
+        replication_factor: 3
+        retention_hours: 72
+        cleanup_policy: delete
+      - name: reconciliation-events
+        partitions: 3
+        replication_factor: 3
+        retention_hours: 168
+        cleanup_policy: delete
+      - name: chargeback-events
+        partitions: 3
+        replication_factor: 3
+        retention_hours: 720
+        cleanup_policy: delete
+
+  # ---------------------------------------------------------------------------
+  # JVM Options
+  # ---------------------------------------------------------------------------
+  jvm-options.conf: |
+    -XX:+UseG1GC
+    -XX:MaxGCPauseMillis=200
+    -XX:+UseNUMA
+    -XX:+AlwaysPreTouch
+    -XX:+HeapDumpOnOutOfMemoryError
+    -XX:HeapDumpPath=/opt/neopay/logs
+    -Djava.security.egd=file:/dev/./urandom
+    -Dfile.encoding=UTF-8
+
+  # ---------------------------------------------------------------------------
+  # Logback Configuration
+  # ---------------------------------------------------------------------------
+  logback-spring.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+      <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+      <springProperty scope="context" name="appName" source="spring.application.name"/>
+      
+      <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"/>
+      
+      <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+          <pattern>${LOG_PATTERN}</pattern>
+          <charset>UTF-8</charset>
+        </encoder>
+      </appender>
+      
+      <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/opt/neopay/logs/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <fileNamePattern>/opt/neopay/logs/application.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+          <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+            <maxFileSize>100MB</maxFileSize>
+          </timeBasedFileNamingAndTriggeringPolicy>
+          <maxHistory>30</maxHistory>
+          <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+          <pattern>${LOG_PATTERN}</pattern>
+          <charset>UTF-8</charset>
+        </encoder>
+      </appender>
+      
+      <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FILE"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+      </appender>
+      
+      <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
+      </root>
+      
+      <logger name="com.neopay" level="DEBUG"/>
+      <logger name="org.springframework.kafka" level="INFO"/>
+      <logger name="org.apache.kafka" level="WARN"/>
+      <logger name="org.hibernate.SQL" level="DEBUG"/>
+    </configuration>
+---
+# =============================================================================
+# Kubernetes Secrets (HSM keys ref, credentials)
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: neopay-secrets
+  namespace: neopay
+  labels:
+    app: neopay
+    tier: platform
+type: Opaque
+stringData:
+  # Database credentials
+  DB_PASSWORD: "${POSTGRES_PASSWORD}"
+  DB_USERNAME: "neopay_app"
+  DB_NAME: "neopay_ledger"
+  
+  # Redis credentials
+  REDIS_PASSWORD: "${REDIS_PASSWORD}"
+  
+  # HSM Configuration
+  HSM_HOST: "neopay-hsm"
+  HSM_PORT: "8888"
+  HSM_TYPE: "thales_payshield"
+  LMK_ZONE1_KEY: "${LMK_ZONE1_KEY}"
+  LMK_ZONE2_KEY: "${LMK_ZONE2_KEY}"
+  LMK_ZONE3_KEY: "${LMK_ZONE3_KEY}"
+  HSM_KEK: "${HSM_KEK}"
+  
+  # Kafka
+  KAFKA_BOOTSTRAP_SERVERS: "neopay-kafka:9092"
+  KAFKA_CONSUMER_GROUP: "neopay-converter"
+  
+  # JWT/OAuth
+  JWT_SECRET: "${JWT_SECRET}"
+  OAUTH_CLIENT_ID: "${OAUTH_CLIENT_ID}"
+  OAUTH_CLIENT_SECRET: "${OAUTH_CLIENT_SECRET}"
+  
+  # Encryption
+  ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
+  MAC_KEY: "${MAC_KEY}"
+---
+# =============================================================================
+# Kafka Connect Secrets
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: neopay-kafka-secrets
+  namespace: neopay
+  labels:
+    app: neopay
+    tier: kafka
+type: Opaque
+stringData:
+  kafka-api-key: "${KAFKA_API_KEY}"
+  kafka-secret: "${KAFKA_SECRET}"

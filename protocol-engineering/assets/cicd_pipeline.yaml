@@ -1,0 +1,200 @@
+# CI/CD Pipeline for Payment Switch - GitLab CI
+stages:
+  - build
+  - test
+  - security
+  - deploy-staging
+  - integration-test
+  - deploy-prod
+
+variables:
+  DOCKER_REGISTRY: "registry.payment-switch.internal"
+  ECR_REPO: "payment-engine"
+  HELM_CHART: "charts/payment-switch"
+  TPS_THRESHOLD: "1500"
+  ERROR_RATE_THRESHOLD: "1.0"
+  ARTIFACT_RETENTION_DAYS: "30"
+
+.build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-21
+  before_script:
+    - apt-get update && apt-get install -y curl
+  script:
+    - mvn clean compile -DskipTests
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+      - target/payment-engine.jar
+    expire_in: 1 hour
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+      - .m2/repository
+
+docker-build:
+  stage: build
+  needs: [".build"]
+  image: docker:24-cli
+  services:
+    - docker:24-dind
+  script:
+    - docker build -t $DOCKER_REGISTRY/$ECR_REPO:$CI_COMMIT_SHA -f Dockerfile .
+    - docker build -t $DOCKER_REGISTRY/$ECR_REPO:latest -f Dockerfile .
+    - docker push $DOCKER_REGISTRY/$ECR_REPO:$CI_COMMIT_SHA
+    - docker push $DOCKER_REGISTRY/$ECR_REPO:latest
+  only:
+    - main
+    - develop
+
+unit-tests:
+  stage: test
+  needs: [".build"]
+  image: maven:3.9-eclipse-temurin-21
+  script:
+    - mvn test -Dspring.profiles.active=test
+    - mvn surefire-report:report
+  coverage: '/TOTAL.*\s+([0-9]{1,3})%/'
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+    expire_in: 7 days
+
+integration-tests:
+  stage: test
+  needs: [docker-build]
+  image: maven:3.9-eclipse-temurin-21
+  services:
+    - postgres:15
+    - rabbitmq:3.12-management
+    - redis:7-alpine
+  variables:
+    POSTGRES_DB: payment_test
+    POSTGRES_USER: payment_user
+    POSTGRES_PASSWORD: test_password
+    RABBITMQ_DEFAULT_USER: test
+    RABBITMQ_DEFAULT_PASS: test
+  script:
+    - mvn verify -Dspring.profiles.active=integration
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+    expire_in: 7 days
+
+load-test:
+  stage: test
+  needs: [docker-build]
+  image: python:3.12-slim
+  script:
+    - pip install httpx asyncio aiohttp
+    - python scripts/load_tester.py --target payment-switch-staging:7000 --tps $TPS_THRESHOLD --duration 120
+  allow_failure: false
+  artifacts:
+    paths:
+      - load_test_results.json
+    expire_in: 7 days
+
+trivy-scan:
+  stage: security
+  image: aquasec/trivy:latest
+  script:
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL $DOCKER_REGISTRY/$ECR_REPO:$CI_COMMIT_SHA
+  allow_failure: true
+  artifacts:
+    paths:
+      - trivay-report.json
+
+dependency-check:
+  stage: security
+  image: owasp/dependency-check:latest
+  script:
+    - dependency-check --project PaymentSwitch --scan ./target --out ./reports
+    - dependency-check --project PaymentSwitch --scan ./pom.xml --out ./reports
+  allow_failure: true
+
+container-signing:
+  stage: security
+  needs: [docker-build]
+  image: docker:24-cli
+  script:
+    - cosign sign --yes $DOCKER_REGISTRY/$ECR_REPO:$CI_COMMIT_SHA
+  only:
+    - main
+
+deploy-staging:
+  stage: deploy-staging
+  needs: [docker-build, unit-tests, integration-tests, load-test, trivy-scan]
+  image: alpine/helm:3.14
+  environment:
+    name: staging
+    url: https://staging.payment-switch.internal
+    on_stop: rollback-staging
+  script:
+    - helm upgrade --install payment-switch $HELM_CHART
+      --namespace payment-staging
+      --values environments/staging/values.yaml
+      --set image.tag=$CI_COMMIT_SHA
+      --set env=staging
+      --atomic
+      --timeout 5m
+  only:
+    - develop
+    - main
+
+smoke-tests:
+  stage: integration-test
+  needs: [deploy-staging]
+  script:
+    - curl -f https://staging.payment-switch.internal/health || exit 1
+    - curl -f https://staging.payment-switch.internal/ready || exit 1
+  allow_failure: false
+
+iso8583-integration:
+  stage: integration-test
+  needs: [deploy-staging]
+  image: python:3.12-slim
+  script:
+    - pip install scripts/parse_iso8583.py scripts/fuzzer.py
+    - python scripts/replay_engine.py --host staging.payment-switch.internal --port 7000 --scenarios test_data/test_scenarios.json
+  allow_failure: false
+
+deploy-prod:
+  stage: deploy-prod
+  needs: [smoke-tests, iso8583-integration]
+  image: alpine/helm:3.14
+  environment:
+    name: production
+    url: https://payment-switch.internal
+    on_stop: rollback-prod
+  script:
+    - echo "Deploying to production..."
+    - helm upgrade --install payment-switch $HELM_CHART
+      --namespace payment-prod
+      --values environments/prod/values.yaml
+      --set image.tag=$CI_COMMIT_SHA
+      --set env=prod
+      --atomic
+      --timeout 10m
+    - python scripts/bot_monitor.py --check-initial-health
+  when: manual
+  only:
+    - main
+
+rollback-staging:
+  stage: deploy-staging
+  environment:
+    name: staging
+    action: stop
+  script:
+    - helm rollback payment-switch --namespace payment-staging
+  when: manual
+
+rollback-prod:
+  stage: deploy-prod
+  environment:
+    name: production
+    action: stop
+  script:
+    - helm rollback payment-switch --namespace payment-prod
+  when: manual

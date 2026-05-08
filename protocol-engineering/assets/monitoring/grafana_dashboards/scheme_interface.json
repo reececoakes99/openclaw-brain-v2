@@ -1,0 +1,31 @@
+{
+  "title": "Scheme Interface Dashboard",
+  "uid": "payment-switch-scheme",
+  "version": 1,
+  "panels": [
+    {"id": 1, "title": "Messages by MTI", "type": "timeseries",
+      "targets": [{"expr": "sum by (mti) (rate(scheme_messages_total[5m]))", "legendFormat": "{{mti}}"}],
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {"id": 2, "title": "Response Code Distribution", "type": "piechart",
+      "targets": [{"expr": "sum by (response_code) (rate(scheme_responses_total[5m]))", "legendFormat": "{{response_code}}"}],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {"id": 3, "title": "Timeout Rate", "type": "gauge",
+      "targets": [{"expr": "rate(scheme_timeouts_total[5m]) / rate(scheme_messages_total[5m]) * 100", "legendFormat": ""}],
+      "fieldConfig": {"defaults": {"unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 5}]}}},
+      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 8}
+    },
+    {"id": 4, "title": "Avg Response Time by MTI", "type": "timeseries",
+      "targets": [{"expr": "sum by (mti) (rate(scheme_response_time_sum[5m])) / sum by (mti) (rate(scheme_response_time_count[5m]))", "legendFormat": "{{mti}}"}],
+      "fieldConfig": {"defaults": {"unit": "ms"}},
+      "gridPos": {"h": 8, "w": 18, "x": 6, "y": 8}
+    }
+  ],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["payment-switch", "scheme", "iso8583"]
+}

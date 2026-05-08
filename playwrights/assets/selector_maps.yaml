@@ -1,0 +1,72 @@
+# Selector Maps
+# Map-friendly CSS selectors with fallback chains for common sites.
+# Format: logical_name: { primary, fallback, xpath }
+
+github:
+  login_btn:
+    primary: '[data-testid="login-button"]'
+    fallback: '.btn-primary'
+    xpath: '//button[contains(@class,"btn-primary")]'
+
+  search_box:
+    primary: '[data-testid="search-input"]'
+    fallback: '.header-search-input'
+    xpath: '//input[@placeholder="Search"]'
+
+google:
+  search_box:
+    primary: '[name="q"]'
+    fallback: '[data-testid="search-input"]'
+    xpath: '//input[@placeholder*="search"i]'
+
+  search_btn:
+    primary: '[name="btnK"]'
+    fallback: '.gNO89b'
+    xpath: '//input[@value="Google Search"]'
+
+  results:
+    primary: '#search'
+    fallback: '.g'
+    xpath: '//div[contains(@class,"result")]'
+
+  result_item:
+    primary: '.g'
+    fallback: '[data-ved]'
+    xpath: '//div[@class="g"]'
+
+  next_btn:
+    primary: '#pnnext'
+    fallback: 'a[aria-label="Next"]'
+    xpath: '//a[@id="pnnext"]'
+
+linkedin:
+  search_box:
+    primary: '[data-testid="search-bar-search-input"]'
+    fallback: '.search-input'
+    xpath: '//input[@placeholder="Search"]'
+
+  job_card:
+    primary: '.job-card-container'
+    fallback: '.jobs-search-results__list-item'
+    xpath: '//li[contains(@class,"job")]'
+
+  apply_btn:
+    primary: '.jobs-apply-button'
+    fallback: 'button[data-testid="apply-button"]'
+    xpath: '//button[contains(@class,"apply")]
+
+form:
+  input:
+    primary: 'input[name="{name}"]'
+    fallback: '[data-testid="{name}"]'
+    xpath: '//input[@name="{name}"]'
+
+  submit_btn:
+    primary: 'button[type="submit"]'
+    fallback: '[data-testid="submit"]'
+    xpath: '//button[contains(@class,"submit")]'
+
+  select:
+    primary: 'select[name="{name}"]'
+    fallback: '[data-testid="{name}"]'
+    xpath: '//select[@name="{name}"]'

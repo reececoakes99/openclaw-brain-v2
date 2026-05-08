@@ -1,0 +1,289 @@
+---
+# =============================================================================
+# Kubernetes Services (ClusterIP + LoadBalancer)
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Neopay Converter Service (ClusterIP)
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-converter
+  namespace: neopay
+  labels:
+    app: neopay-converter
+    tier: application
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  selector:
+    app: neopay-converter
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+    - name: jmx
+      port: 7001
+      targetPort: 7001
+      protocol: TCP
+    - name: prometheus
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  healthCheck:
+    nodePort: 30000
+---
+# ---------------------------------------------------------------------------
+# Neopay Converter Service (LoadBalancer - External)
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-converter-lb
+  namespace: neopay
+  labels:
+    app: neopay-converter
+    tier: application
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "${SSL_CERT_ARN}"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/actuator/health"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval-seconds: "10"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-timeout-seconds: "5"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "2"
+spec:
+  type: LoadBalancer
+  selector:
+    app: neopay-converter
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8080
+      protocol: TCP
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# Neopay Switch Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-switch
+  namespace: neopay
+  labels:
+    app: neopay-switch
+    tier: application
+spec:
+  type: ClusterIP
+  selector:
+    app: neopay-switch
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# Neopay Auth Host Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-auth-host
+  namespace: neopay
+  labels:
+    app: neopay-auth-host
+    tier: application
+spec:
+  type: ClusterIP
+  selector:
+    app: neopay-auth-host
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# Neopay Simulator Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-simulator
+  namespace: neopay
+  labels:
+    app: neopay-simulator
+    tier: simulator
+spec:
+  type: ClusterIP
+  selector:
+    app: neopay-simulator
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# PostgreSQL Headless Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-postgres
+  namespace: neopay
+  labels:
+    app: neopay-postgres
+    tier: database
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: neopay-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# PostgreSQL Read Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-postgres-read
+  namespace: neopay
+  labels:
+    app: neopay-postgres
+    tier: database
+spec:
+  type: ClusterIP
+  selector:
+    app: neopay-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# Kafka Headless Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-kafka
+  namespace: neopay
+  labels:
+    app: neopay-kafka
+    tier: messaging
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: neopay-kafka
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+      protocol: TCP
+    - name: kafka-host
+      port: 9093
+      targetPort: 9093
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# Kafka External Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-kafka-external
+  namespace: neopay
+  labels:
+    app: neopay-kafka
+    tier: messaging
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  selector:
+    app: neopay-kafka
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# ZooKeeper Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-zookeeper
+  namespace: neopay
+  labels:
+    app: neopay-zookeeper
+    tier: messaging
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: neopay-zookeeper
+  ports:
+    - name: client
+      port: 2181
+      targetPort: 2181
+      protocol: TCP
+    - name: election
+      port: 2888
+      targetPort: 2888
+      protocol: TCP
+    - name: leader-election
+      port: 3888
+      targetPort: 3888
+      protocol: TCP
+---
+# ---------------------------------------------------------------------------
+# Redis Service
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: neopay-redis
+  namespace: neopay
+  labels:
+    app: neopay-redis
+    tier: cache
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: neopay-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP

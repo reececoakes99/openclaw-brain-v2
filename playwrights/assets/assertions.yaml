@@ -1,0 +1,34 @@
+# Assertion Templates
+
+url_contains:
+  - type: url
+    contains: "success"
+  - type: url
+    contains: "dashboard"
+
+selector_present:
+  - type: selector
+    present: ".success"
+  - type: selector
+    present: "[data-testid='confirmation']"
+
+response_status:
+  - type: response
+    status: 200
+  - type: response
+    status: 201
+
+token_found:
+  - type: network
+    contains_token: "access_token"
+  - type: network
+    contains_token: "Bearer"
+
+no_error:
+  - type: console
+    exclude: "Error"
+    exclude: "Uncaught"
+
+page_title:
+  - type: title
+    contains: "Dashboard"

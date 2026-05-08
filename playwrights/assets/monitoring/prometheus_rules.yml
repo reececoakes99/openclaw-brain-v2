@@ -1,0 +1,75 @@
+groups:
+  - name: playwrights
+    rules:
+      - alert: PlaywrightAPIErrorRateAbove5Percent
+        expr: |
+          (sum(rate(playwrights_http_requests_total{status_code=~"5.."}[5m])) /
+           sum(rate(playwrights_http_requests_total[5m]))) > 0.05
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "API error rate exceeds 5%"
+          description: "{{ $value | printf \"%.2f\" }}% of requests returning 5xx errors"
+
+      - alert: BrowserCrashRateAbove1Percent
+        expr: |
+          (sum(rate(playwrights_browser_launches_total{status="crashed"}[10m])) /
+           sum(rate(playwrights_browser_launches_total[10m]))) > 0.01
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "Browser crash rate exceeds 1%"
+
+      - alert: QueueDepthExceeds1000
+        expr: sum(playwrights_queue_depth) > 1000
+        for: 3m
+        labels: {severity: warning}
+        annotations:
+          summary: "Redis queue depth above 1000"
+
+      - alert: DatabaseConnectionPoolSaturated
+        expr: |
+          (sum(playwrights_db_connections_active) /
+           sum(playwrights_db_connections_active + playwrights_db_connections_idle)) > 0.80
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: "Database connection pool > 80% active"
+
+      - alert: RedisMemoryHigh
+        expr: |
+          (redis_memory_used_bytes / redis_memory_max_bytes) > 0.80
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "Redis memory usage above 80%"
+
+      - alert: APILatencyP95Above10Seconds
+        expr: histogram_quantile(0.95, rate(playwrights_http_request_duration_seconds_bucket[5m])) > 10
+        for: 3m
+        labels: {severity: warning}
+        annotations:
+          summary: "p95 API latency exceeds 10 seconds"
+
+      - alert: QueueProcessingStalled
+        expr: rate(playwrights_queue_processed_total[5m]) == 0 and playwrights_queue_depth > 0
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: "Queue processing stalled — workers not consuming"
+
+  - name: playwrights-recording
+    interval: 60s
+    rules:
+      - record: playwrights:request_rate_5m
+        expr: rate(playwrights_http_requests_total[5m])
+      - record: playwrights:error_rate_5m
+        expr: rate(playwrights_http_requests_total{status_code=~"5.."}[5m])
+      - record: playwrights:latency_p95_5m
+        expr: histogram_quantile(0.95, rate(playwrights_http_request_duration_seconds_bucket[5m]))
+      - record: playwrights:latency_p50_5m
+        expr: histogram_quantile(0.50, rate(playwrights_http_request_duration_seconds_bucket[5m]))
+      - record: playwrights:browser_crash_rate_5m
+        expr: rate(playwrights_browser_launches_total{status="crashed"}[5m])
+      - record: playwrights:queue_depth_total
+        expr: sum(playwrights_queue_depth)

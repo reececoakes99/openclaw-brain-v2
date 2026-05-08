@@ -1,0 +1,429 @@
+{
+  "scenarios": [
+    {
+      "id": "AUTH-001",
+      "name": "Authorization Flow",
+      "description": "Standard authorization: client → switch → scheme, approved response",
+      "mti_request": "0200",
+      "mti_response": "0210",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "4111111111111111",
+          "3": "000000",
+          "4": "000000001500",
+          "7": "0507123456",
+          "11": "000001",
+          "12": "123456",
+          "13": "0507",
+          "14": "2512",
+          "15": "0507",
+          "18": "5411",
+          "22": "012",
+          "25": "00",
+          "32": "111111",
+          "35": "4111111111111111=2512101ABCD12345678901?",
+          "37": "RRN000001",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "48": "0000000001",
+          "49": "840",
+          "57": "T",
+          "61": "0000000000",
+          "63": "000"
+        }
+      },
+      "response": {
+        "mti": "0210",
+        "fields": {
+          "2": "4111111111111111",
+          "3": "000000",
+          "4": "000000001500",
+          "7": "0507123456",
+          "11": "000001",
+          "12": "123456",
+          "13": "0507",
+          "37": "RRN000001",
+          "38": "AUTH12345",
+          "39": "00",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840"
+        }
+      },
+      "validation": {
+        "response_code": "00",
+        "auth_code_present": true,
+        "rrn_matched": true,
+        "amount_matched": true
+      }
+    },
+    {
+      "id": "AUTH-002",
+      "name": "Authorization - Decline (Insufficient Funds)",
+      "description": "Authorization declined due to insufficient funds",
+      "mti_request": "0200",
+      "mti_response": "0210",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "4111111111111111",
+          "3": "000000",
+          "4": "000000050000",
+          "7": "0507123500",
+          "11": "000002",
+          "12": "123500",
+          "13": "0507",
+          "14": "2512",
+          "15": "0507",
+          "18": "5411",
+          "22": "012",
+          "25": "00",
+          "37": "RRN000002",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840"
+        }
+      },
+      "response": {
+        "mti": "0210",
+        "fields": {
+          "2": "4111111111111111",
+          "3": "000000",
+          "4": "000000050000",
+          "7": "0507123500",
+          "11": "000002",
+          "37": "RRN000002",
+          "38": "      ",
+          "39": "51",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840"
+        }
+      },
+      "validation": {
+        "response_code": "51",
+        "auth_code_absent": true,
+        "rrn_matched": true
+      }
+    },
+    {
+      "id": "AUTH-003",
+      "name": "Authorization - Decline (Invalid Card)",
+      "description": "Authorization declined due to invalid card number",
+      "mti_request": "0200",
+      "mti_response": "0210",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "4999123456789012",
+          "3": "000000",
+          "4": "000000001000",
+          "7": "0507123600",
+          "11": "000003",
+          "37": "RRN000003",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840"
+        }
+      },
+      "response": {
+        "mti": "0210",
+        "fields": {
+          "39": "14",
+          "37": "RRN000003"
+        }
+      },
+      "validation": {
+        "response_code": "14",
+        "decline_confirmed": true
+      }
+    },
+    {
+      "id": "AUTH-004",
+      "name": "Authorization - Timeout Simulation",
+      "description": "No response received within timeout window (30s)",
+      "mti_request": "0200",
+      "mti_response": "timeout",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "4111111111111111",
+          "4": "000000001999",
+          "7": "0507123700",
+          "11": "000004",
+          "37": "RRN000004",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840"
+        }
+      },
+      "response": {
+        "mti": "timeout",
+        "timeout_ms": 30000
+      },
+      "validation": {
+        "timeout_confirmed": true,
+        "fallback_action": "auto_reversal_sent"
+      }
+    },
+    {
+      "id": "AUTH-005",
+      "name": "Authorization - Card Expired",
+      "description": "Authorization declined: card expiry date in past",
+      "mti_request": "0200",
+      "mti_response": "0210",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "5555555555554444",
+          "3": "000000",
+          "4": "000000000500",
+          "7": "0507123800",
+          "11": "000005",
+          "13": "0501",
+          "14": "2301",
+          "37": "RRN000005",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840"
+        }
+      },
+      "response": {
+        "mti": "0210",
+        "fields": {
+          "39": "54",
+          "37": "RRN000005"
+        }
+      },
+      "validation": {
+        "response_code": "54"
+      }
+    },
+    {
+      "id": "AUTH-006",
+      "name": "Authorization - Do Not Honor",
+      "description": "Generic decline from issuer",
+      "mti_request": "0200",
+      "mti_response": "0210",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "4111111111111111",
+          "4": "000000003000",
+          "7": "0507123900",
+          "11": "000006",
+          "37": "RRN000006",
+          "41": "TERM00101",
+          "42": "MERCH00000002",
+          "49": "840"
+        }
+      },
+      "response": {
+        "mti": "0210",
+        "fields": {
+          "39": "05",
+          "37": "RRN000006"
+        }
+      },
+      "validation": {
+        "response_code": "05"
+      }
+    },
+    {
+      "id": "CAPT-001",
+      "name": "Capture (Financial)",
+      "description": "Capture previously authorized transaction",
+      "mti_request": "0200",
+      "mti_response": "0210",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "4111111111111111",
+          "3": "000000",
+          "4": "000000001500",
+          "7": "0507124000",
+          "11": "000007",
+          "12": "124000",
+          "18": "5411",
+          "37": "RRN000001",
+          "38": "AUTH12345",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840"
+        }
+      },
+      "response": {
+        "mti": "0210",
+        "fields": {
+          "39": "00",
+          "37": "RRN000007",
+          "38": "AUTH12345"
+        }
+      },
+      "validation": {
+        "response_code": "00",
+        "capture_confirmed": true
+      }
+    },
+    {
+      "id": "CAPT-002",
+      "name": "Partial Capture",
+      "description": "Capture less than original authorized amount",
+      "mti_request": "0200",
+      "mti_response": "0210",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "4111111111111111",
+          "3": "000000",
+          "4": "000000001000",
+          "5": "000000000500",
+          "7": "0507124100",
+          "11": "000008",
+          "37": "RRN000001",
+          "38": "AUTH12345",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840",
+          "62": "ORIGINAL_AMOUNT=000000001500"
+        }
+      },
+      "response": {
+        "mti": "0210",
+        "fields": {
+          "39": "00",
+          "37": "RRN000008",
+          "5": "000000000500"
+        }
+      },
+      "validation": {
+        "response_code": "00",
+        "partial_confirmed": true,
+        "original_amount_preserved": true
+      }
+    },
+    {
+      "id": "REV-001",
+      "name": "Reversal (Full)",
+      "description": "Full reversal of a previously settled transaction",
+      "mti_request": "0400",
+      "mti_response": "0410",
+      "request": {
+        "mti": "0400",
+        "fields": {
+          "2": "4111111111111111",
+          "3": "000000",
+          "4": "000000001500",
+          "7": "0507124200",
+          "11": "000009",
+          "12": "124200",
+          "18": "5411",
+          "37": "RRN000007",
+          "38": "AUTH12345",
+          "39": "00",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840",
+          "90": "0200RRN0000010000010000000001500"
+        }
+      },
+      "response": {
+        "mti": "0410",
+        "fields": {
+          "39": "00",
+          "37": "RRN000009"
+        }
+      },
+      "validation": {
+        "response_code": "00",
+        "reversal_confirmed": true
+      }
+    },
+    {
+      "id": "REV-002",
+      "name": "Reversal - Duplicate Detection",
+      "description": "Duplicate reversal should be rejected",
+      "mti_request": "0400",
+      "mti_response": "0410",
+      "request": {
+        "mti": "0400",
+        "fields": {
+          "2": "4111111111111111",
+          "4": "000000001500",
+          "7": "0507124300",
+          "11": "000010",
+          "37": "RRN000007",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840",
+          "90": "0200RRN0000010000010000000001500"
+        }
+      },
+      "response": {
+        "mti": "0410",
+        "fields": {
+          "39": "94",
+          "37": "RRN000010"
+        }
+      },
+      "validation": {
+        "response_code": "94",
+        "duplicate_rejected": true
+      }
+    },
+    {
+      "id": "REF-001",
+      "name": "Refund",
+      "description": "Standalone refund without original authorization",
+      "mti_request": "0200",
+      "mti_response": "0210",
+      "request": {
+        "mti": "0200",
+        "fields": {
+          "2": "4111111111111111",
+          "3": "200000",
+          "4": "000000002000",
+          "7": "0507124400",
+          "11": "000011",
+          "12": "124400",
+          "18": "5411",
+          "22": "012",
+          "37": "RRN000011",
+          "41": "TERM00101",
+          "42": "MERCH00000001",
+          "49": "840"
+        }
+      },
+      "response": {
+        "mti": "0210",
+        "fields": {
+          "39": "00",
+          "37": "RRN000011"
+        }
+      },
+      "validation": {
+        "response_code": "00",
+        "refund_confirmed": true,
+        "transaction_type": "20"
+      }
+    }
+  ],
+  "schema_version": "1.0",
+  "dialect": "HISO93",
+  "encoding": "binary",
+  "notes": {
+    "all_amounts": "in cents (smallest currency unit)",
+    "currency_code": "ISO 4217",
+    "rrn": "Retrieval Reference Number - 12 chars, unique per transaction",
+    "auth_code": "6 chars, issued by issuer",
+    "response_codes": {
+      "00": "Approved",
+      "05": "Do Not Honor",
+      "14": "Invalid Card Number",
+      "51": "Insufficient Funds",
+      "54": "Expired Card",
+      "94": "Duplicate Transaction"
+    }
+  }
+}

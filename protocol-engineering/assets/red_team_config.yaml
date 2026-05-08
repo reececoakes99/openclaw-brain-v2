@@ -1,0 +1,223 @@
+# Red Team Configuration for Payment Switch Infrastructure
+# Engagement rules, targets, techniques, and reporting
+
+version: "1.0"
+last_updated: "2026-01-15"
+
+# Target Environments
+targets:
+  test:
+    description: "Isolated test environment, no production data"
+    network: "10.0.0.0/24"
+    hosts:
+      - "10.0.1.10"  # Payment switch
+      - "10.0.1.20"  # HSM simulator
+      - "10.0.1.30"  # Message broker
+      - "10.0.1.40"  # Database
+    allowed: true
+    rules: "Full scope, all techniques permitted"
+
+  staging:
+    description: "Staging environment with anonymized data"
+    network: "172.16.0.0/24"
+    hosts:
+      - "172.16.1.10"  # Payment switch
+      - "172.16.1.20"  # HSM staging
+    allowed: true
+    rules: "Network recon + application testing; no DoS"
+
+  prod:
+    description: "Production payment infrastructure"
+    network: "192.168.0.0/24"
+    hosts: []  # Define before engagement
+    allowed: false
+    rules: "Read-only testing only; explicit approval required"
+
+# Scope Boundaries
+scope:
+  in_scope:
+    - "ISO8583 message processing"
+    - "HSM key management interfaces"
+    - "Message broker (RabbitMQ/Kafka)"
+    - "Payment switch API endpoints"
+    - "Scheme interface connectors"
+    - "Admin dashboard and configuration"
+  out_of_scope:
+    - "Physical security of data centers"
+    - "Social engineering"
+    - "Physical HSM key ceremony"
+    - "Third-party scheme networks"
+  limits:
+    - "No destructive DoS/DDoS"
+    - "No exfiltration of PII/cardholder data"
+    - "No modification of production transaction data"
+    - "Max 10 concurrent connections for load testing"
+
+# Allowed Techniques
+techniques:
+  network_recon:
+    - "Port scanning (nmap, masscan)"
+    - "Service enumeration"
+    - "Protocol fingerprinting"
+    - "Passive packet capture"
+  iso8583_testing:
+    - "Message fuzzing (MTI, bitmap, field overflow)"
+    - "HISO93/HISO87 dialect detection"
+    - "Bitmap manipulation"
+    - "Field truncation/extension"
+    - "Invalid MTI combinations"
+    - "Replay attacks (same RRN)"
+  crypto_testing:
+    - "TLS downgrade (SSLv3, TLS1.0, TLS1.1)"
+    - "Weak cipher enumeration"
+    - "PIN block format analysis"
+    - "MAC algorithm downgrade"
+    - "Key check value brute force (test env only)"
+  hsm_interface:
+    - "HSM command injection"
+    - "Key export attempts"
+    - "PIN block translation attacks"
+    - "ARQC/ARPC replay"
+  application:
+    - "SQL injection in transaction lookup"
+    - "XXE in XML-based ISO8583 variants"
+    - "Command injection in admin interface"
+    - "Authentication bypass"
+    - "Authorization flaws"
+  message_queue:
+    - "Unauthorized message injection"
+    - "Queue manipulation"
+    - "Dead letter queue exploitation"
+
+# MITRE ATT&CK Mapping
+mitre_mapping:
+  initial_access:
+    - "T1190: Exploit Public-Facing Application"
+  execution:
+    - "T1059: Command and Scripting Interpreter"
+  persistence:
+    - "T1078: Valid Accounts"
+  lateral_movement:
+    - "T1021: Remote Services"
+  collection:
+    - "T1005: Data from Local System"
+  exfiltration:
+    - "T1041: Exfiltration Over C2 Channel"
+  impact:
+    - "T1486: Data Encrypted for Impact"  # Ransomware scenario
+
+# Attack Sequences
+attack_sequences:
+  iso8583_fuzz:
+    name: "ISO8583 Protocol Fuzzing"
+    phases:
+      - "Discover message format (HISO93 vs HISO87)"
+      - "Baseline valid transaction capture"
+      - "Fuzz MTI: invalid values, out-of-range"
+      - "Fuzz bitmap: toggle bits, compressed/uncompressed mix"
+      - "Fuzz fields: overflow, underflow, special chars"
+      - "Analyze crash/error responses"
+    tools: ["fuzzer.py", "replay_engine.py", "pcap_tools.py"]
+
+  crypto_downgrade:
+    name: "Cryptographic Downgrade Attack"
+    phases:
+      - "Enumerate TLS versions supported"
+      - "Enumerate cipher suites (null, export, RC4, 3DES)"
+      - "Test HSM key check value algorithm strength"
+      - "Test MAC algorithm negotiation"
+      - "Document downgrade path"
+    tools: ["crypto_downgrade.py"]
+
+  mitm_injection:
+    name: "MITM Message Injection"
+    phases:
+      - "Position MITM proxy between client/switch"
+      - "Capture baseline transactions"
+      - "Inject delay/mutation/payload modification"
+      - "Observe switch response divergence"
+    tools: ["mitm_proxy.py"]
+
+  hsm_manipulation:
+    name: "HSM Interface Manipulation"
+    phases:
+      - "Map HSM command interface"
+      - "Attempt unauthorized key export"
+      - "Test PIN block translation without auth"
+      - "Fuzz HSM response codes"
+    tools: ["hsm_simulator.py", "bot_monitor.py"]
+
+  queue_poisoning:
+    name: "Message Queue Poisoning"
+    phases:
+      - "Enumerate RabbitMQ/Kafka topology"
+      - "Inject unauthorized messages into queues"
+      - "Trigger dead letter queue processing"
+      - "Observe downstream effects"
+    tools: ["replay_engine.py"]
+
+# Reporting Templates
+reporting:
+  finding_format:
+    - id: "PE-001"
+      title: ""
+      severity: "CRITICAL | HIGH | MEDIUM | LOW | INFO"
+      cvss_score: 0.0
+      affected_components: []
+      description: ""
+      steps_to_reproduce: []
+      impact: ""
+      remediation: ""
+      evidence: ""
+      references: []
+  severity_scale:
+    CRITICAL: "CVSS 9.0-10 — Data breach imminent or confirmed"
+    HIGH: "CVSS 7.0-8.9 — Significant vulnerability, exploit likely"
+    MEDIUM: "CVSS 4.0-6.9 — Moderate risk, mitigating controls exist"
+    LOW: "CVSS 0.1-3.9 — Minimal risk, low likelihood of exploitation"
+    INFO: "No vulnerability — informational finding"
+
+# Rules of Engagement
+rules_of_engagement:
+  - "All testing must be documented in scope document signed by stakeholder"
+  - "No testing during peak transaction hours (08:00-20:00 local time)"
+  - "Maintain communication channel with operations team during testing"
+  - "Rollback any configuration changes within 24 hours"
+  - "All findings must be reproducible in test environment"
+  - "Red team operator credentials must expire after engagement"
+  - "No physical access to HSM without explicit written approval"
+
+# Exfiltration Limits
+data_handling:
+  allow_exfil: false
+  allowed_data: ["Network topology diagrams", "Service versions", "Error messages"]
+  forbid_exfil: ["Cardholder data", "PII", "Encryption keys in cleartext", "Transaction content"]
+  sanitization_required: true
+  report_only: true
+
+# Tool Inventory
+tool_inventory:
+  - name: "fuzzer.py"
+    category: "protocol"
+    purpose: "ISO8583 message fuzzing"
+  - name: "mitm_proxy.py"
+    category: "network"
+    purpose: "Traffic interception and manipulation"
+  - name: "crypto_downgrade.py"
+    category: "crypto"
+    purpose: "TLS/cipher downgrade testing"
+  - name: "pcap_tools.py"
+    category: "analysis"
+    purpose: "PCAP analysis and message extraction"
+  - name: "replay_engine.py"
+    category: "protocol"
+    purpose: "Transaction replay and diff analysis"
+  - name: "fingerprinter.py"
+    category: "analysis"
+    purpose: "Protocol dialect detection"
+  - name: "hsm_simulator.py"
+    category: "hsm"
+    purpose: "Simulated HSM responses for testing"
+  - name: "load_tester.py"
+    category: "load"
+    purpose: "Transaction load generation"

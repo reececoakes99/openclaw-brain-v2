@@ -1,0 +1,2 @@
+# Fuzzing corpus for ISO8583 protocol testing
+# Add valid and invalid message samples here for fuzzing campaigns

@@ -1,0 +1,111 @@
+groups:
+  - name: payment-gateway
+    rules:
+      - alert: TPSBelowMinimum
+        expr: rate(payment_authorizations_total[5m]) < 100
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "Transaction throughput below 100 TPS"
+          description: "Current TPS is below minimum threshold. Check scheme interface and HSM connectivity."
+          runbook: "https://runbooks.neopay.example.com/tps-drop"
+
+      - alert: ErrorRateAbove1Percent
+        expr: (sum(rate(payment_errors_total[5m])) / sum(rate(payment_authorizations_total[5m]))) > 0.01
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "Payment error rate exceeds 1%"
+          description: "Error rate is {{ $value | printf \"%.2f\" }}%. Check HSM, database, and scheme connectivity."
+
+      - alert: LatencyP99Above5s
+        expr: histogram_quantile(0.99, rate(payment_processing_duration_seconds_bucket[5m])) > 5
+        for: 3m
+        labels: { severity: warning }
+        annotations:
+          summary: "p99 latency exceeds 5 seconds"
+          description: "Transaction processing p99 is {{ $value | printf \"%.2f\" }}s. Check queue depth and HSM response times."
+
+      - alert: QueueDepthAboveThreshold
+        expr: rabbitmq_queue_messages{queue="payment-switch"} > 100 or kafka_consumer_lag{topic="payment-requests"} > 1000
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "Message queue depth above threshold"
+
+      - alert: HSMConnectionPoolSaturated
+        expr: (hsm_connection_pool_active / (hsm_connection_pool_active + hsm_connection_pool_idle)) > 0.80
+        for: 1m
+        labels: { severity: warning }
+        annotations:
+          summary: "HSM connection pool > 80% utilized"
+          description: "HSM operations may be queued. Consider scaling HSM or optimizing connection reuse."
+
+      - alert: SchemeInterfaceDown
+        expr: up{job="scheme-interface"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "Scheme interface unreachable"
+          description: "Cannot reach scheme endpoint. Check network connectivity and scheme service status."
+
+      - alert: HSMMACVerificationFailures
+        expr: rate(hsm_operations_total{op="verify_mac",status="failure"}[5m]) > 1
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "HSM MAC verification failure rate elevated"
+
+      - alert: CertificateExpiryWithin30Days
+        expr: (certify_not_after - time()) < 86400 * 30
+        for: 1h
+        labels: { severity: warning }
+        annotations:
+          summary: "Certificate expires in less than 30 days"
+
+      - alert: DiskSpaceAbove80Percent
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.20
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Disk space above 80% utilization"
+
+      - alert: MemoryUtilizationAbove85Percent
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Memory utilization above 85%"
+
+      - alert: KafkaConsumerLag
+        expr: kafka_consumer_lag{topic="payment-responses"} > 5000
+        for: 3m
+        labels: { severity: warning }
+        annotations:
+          summary: "Kafka consumer lag > 5000 messages on payment-responses"
+
+      - alert: DatabaseConnectionPoolNearExhaustion
+        expr: (db_connection_pool_active / db_connection_pool_max) > 0.80
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "Database connection pool > 80% active"
+
+# Recording rules for long-term storage
+  - name: payment-gateway-recording
+    interval: 60s
+    rules:
+      - record: payment:auth_rate_5m
+        expr: rate(payment_authorizations_total[5m])
+      - record: payment:error_rate_5m
+        expr: rate(payment_errors_total[5m])
+      - record: payment:latency_p99_5m
+        expr: histogram_quantile(0.99, rate(payment_processing_duration_seconds_bucket[5m]))
+      - record: payment:latency_p95_5m
+        expr: histogram_quantile(0.95, rate(payment_processing_duration_seconds_bucket[5m]))
+      - record: payment:latency_p50_5m
+        expr: histogram_quantile(0.50, rate(payment_processing_duration_seconds_bucket[5m]))
+      - record: hsm:ops_rate_5m
+        expr: rate(hsm_operations_total[5m])
+      - record: hsm:error_rate_5m
+        expr: rate(hsm_operations_total{status="failure"}[5m])

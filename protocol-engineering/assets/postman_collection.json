@@ -1,0 +1,58 @@
+{
+  "info": {
+    "name": "Payment Switch API",
+    "version": "1.0.0",
+    "description": "Postman collection for payment switch ISO8583/HSM API testing"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "https://payment-switch.internal:7000", "type": "default"},
+    {"key": "apiKey", "value": "", "type": "default"},
+    {"key": "hsmHost", "value": "hsm.internal:8443", "type": "default"},
+    {"key": "testMerchantId", "value": "MERCHANT001", "type": "default"},
+    {"key": "testTerminalId", "value": "TERM001", "type": "default"}
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {"name": "Login", "request": {"method": "POST", "url": "{{baseUrl}}/v1/auth/login", "header": [{"key": "X-API-Key", "value": "{{apiKey}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"username\":\"admin\",\"password\":\"{{$randomAlphaNumeric}}\"}"}, "event": [{"listen": "test", "script": {"exec": ["pm.test('Status 200', function() { pm.response.to.have.status(200); })", "pm.test('Has token', function() { pm.expect(pm.response.json()).to.have.property('token'); })", "pm.variables.set('token', pm.response.json().token);"]}]}}},
+        {"name": "Token Refresh", "request": {"method": "POST", "url": "{{baseUrl}}/v1/auth/refresh", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"refresh_token\":\"{{refreshToken}}\"}"}}},
+        {"name": "Logout", "request": {"method": "POST", "url": "{{baseUrl}}/v1/auth/logout", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}]}}
+      ]
+    },
+    {
+      "name": "Financial",
+      "item": [
+        {"name": "Authorize", "request": {"method": "POST", "url": "{{baseUrl}}/v1/transactions/authorize", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"mti\":\"0200\",\"pan\":\"4111111111111111\",\"exp\":\"1226\",\"cvv\":\"123\",\"amount\":\"10000\",\"currency\":\"USD\",\"rrn\":\"{{$guid}}\",\"stan\":\"{{$timestamp}}\",\"term_id\":\"{{testTerminalId}}\",\"merch_id\":\"{{testMerchantId}}\",\"pos_entry\":\"0710\"}"}, "event": [{"listen": "test", "script": {"exec": ["pm.test('Approved or declined', function() { var r = pm.response.json(); pm.expect(['00','05','51','54']).to.include(r.response_code); })"]}]}}},
+        {"name": "Capture", "request": {"method": "POST", "url": "{{baseUrl}}/v1/transactions/capture", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"original_rrn\":\"{{rrn}}\",\"amount\":\"10000\",\"currency\":\"USD\"}"}}},
+        {"name": "Refund", "request": {"method": "POST", "url": "{{baseUrl}}/v1/transactions/refund", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"original_rrn\":\"{{rrn}}\",\"amount\":\"5000\",\"currency\":\"USD\",\"reason\":\"customer_request\"}"}}},
+        {"name": "Void", "request": {"method": "POST", "url": "{{baseUrl}}/v1/transactions/void", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"original_rrn\":\"{{rrn}}\",\"reason\":\"double_charge\"}"}}}
+      ]
+    },
+    {
+      "name": "Reversal",
+      "item": [
+        {"name": "Reverse Transaction", "request": {"method": "POST", "url": "{{baseUrl}}/v1/transactions/reverse", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"original_rrn\":\"{{rrn}}\",\"reason\":\"timeout\"}"}}},
+        {"name": "Query Reversal Status", "request": {"method": "GET", "url": "{{baseUrl}}/v1/reversals/{{rrn}}/status", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}]}}
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {"name": "Health Check", "request": {"method": "GET", "url": "{{baseUrl}}/health"}},
+        {"name": "Metrics", "request": {"method": "GET", "url": "{{baseUrl}}/metrics", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}]}},
+        {"name": "Config Reload", "request": {"method": "POST", "url": "{{baseUrl}}/v1/admin/config/reload", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"component\":\"all\"}"}}},
+        {"name": "Key Exchange", "request": {"method": "POST", "url": "{{baseUrl}}/v1/admin/key-exchange", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"key_type\":\"ZMK\",\"target_terminal\":\"{{testTerminalId}}\",\"kcv_required\":true}"}}}
+      ]
+    },
+    {
+      "name": "HSM",
+      "item": [
+        {"name": "Encrypt PIN Block", "request": {"method": "POST", "url": "{{baseUrl}}/v1/hsm/encrypt-pin", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"format\":\"format0\",\"pin\":\"1234\",\"pan\":\"4111111111111111\",\"pek_id\":\"PEK001\"}"}}},
+        {"name": "Verify MAC", "request": {"method": "POST", "url": "{{baseUrl}}/v1/hsm/verify-mac", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"message\":\"02A10000000000000000000040000010004111111111111111126122600000000000000100000001000000\",\"mac\":\"A1B2C3D4\",\"algorithm\":\"ISO9797-1\"}"}}},
+        {"name": "Generate Key", "request": {"method": "POST", "url": "{{baseUrl}}/v1/hsm/generate-key", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"key_type\":\"ZMK\",\"scheme\":\"double_length\",\"export_encrypted\":true,\"kcv_required\":true}"}}},
+        {"name": "Translate PIN Block", "request": {"method": "POST", "url": "{{baseUrl}}/v1/hsm/translate-pin", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"source_format\":\"format0\",\"source_pan\":\"4111111111111111\",\"target_format\":\"format1\",\"target_pan\":\"5500000000000004\",\"source_pek_id\":\"PEK001\",\"target_pek_id\":\"PEK002\"}"}}}
+      ]
+    }
+  ]
+}

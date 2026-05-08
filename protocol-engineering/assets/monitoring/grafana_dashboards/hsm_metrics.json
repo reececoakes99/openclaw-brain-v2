@@ -1,0 +1,42 @@
+{
+  "title": "HSM Metrics Dashboard",
+  "uid": "payment-switch-hsm",
+  "version": 1,
+  "panels": [
+    {
+      "id": 1, "title": "Key Generation Rate", "type": "timeseries",
+      "targets": [{"expr": "rate(hsm_key_generation_total[5m])", "legendFormat": "Keys/sec"}],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "id": 2, "title": "MAC Verifications/sec", "type": "timeseries",
+      "targets": [{"expr": "rate(hsm_mac_verification_total[5m])", "legendFormat": "MAC/sec"}],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "id": 3, "title": "PIN Blocks Processed", "type": "timeseries",
+      "targets": [{"expr": "rate(hsm_pin_operations_total[5m])", "legendFormat": "PIN/sec"}],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "id": 4, "title": "HSM Error Rate", "type": "gauge",
+      "targets": [{"expr": "rate(hsm_errors_total[5m]) / rate(hsm_operations_total[5m]) * 100", "legendFormat": ""}],
+      "fieldConfig": {"defaults": {"unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.1}, {"color": "red", "value": 1}]}}}
+    },
+    {
+      "id": 5, "title": "Connection Pool Utilization", "type": "timeseries",
+      "targets": [{"expr": "hsm_connection_pool_used / hsm_connection_pool_total * 100", "legendFormat": "Pool %"}],
+      "fieldConfig": {"defaults": {"unit": "percent", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 60}, {"color": "red", "value": 80}]}}}
+    },
+    {
+      "id": 6, "title": "Average HSM Operation Latency", "type": "timeseries",
+      "targets": [{"expr": "rate(hsm_operation_duration_seconds_sum[5m]) / rate(hsm_operation_duration_seconds_count[5m])", "legendFormat": "Avg ms"}],
+      "fieldConfig": {"defaults": {"unit": "ms"}}
+    }
+  ],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["payment-switch", "hsm", "security"]
+}

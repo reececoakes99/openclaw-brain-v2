@@ -17,7 +17,7 @@ playwright==1.44.0
 selenium==4.21.0
 
 # Async
-aiohttp==3.9.5
+aiohttp==3.13.4
 asyncio==3.4.3
 
 # Data processing

@@ -1,0 +1,12 @@
+{
+  "framework": "",
+  "version": "",
+  "dependencies": [],
+  "payment_processor": "",
+  "third_party_integrations": [],
+  "cdn_waf": "",
+  "database": "",
+  "crypto_stack": "",
+  "vulnerabilities_known": [],
+  "exploitation_history": []
+}

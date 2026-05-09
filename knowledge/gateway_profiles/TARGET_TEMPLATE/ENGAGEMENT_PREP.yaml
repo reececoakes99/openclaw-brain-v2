@@ -1,0 +1,53 @@
+target:
+  domain: ""
+  priority: P1-P5
+  score: 0
+
+engagement:
+  authorized: false
+  approved_by: ""
+  scope: []
+  boundaries: []
+  rules_of_engagement: []
+
+attack_sequence:
+  - step: 1
+    phase: recon_validation
+    vector: ""
+    expected_duration: ""
+    abort_conditions: []
+  - step: 2
+    phase: initial_access
+    vector: ""
+    expected_duration: ""
+    abort_conditions: []
+  - step: 3
+    phase: persistence
+    vector: ""
+    expected_duration: ""
+    abort_conditions: []
+  - step: 4
+    phase: escalation
+    vector: ""
+    expected_duration: ""
+    abort_conditions: []
+  - step: 5
+    phase: data_extraction
+    vector: ""
+    expected_duration: ""
+    abort_conditions: []
+  - step: 6
+    phase: cleanup
+    vector: ""
+    expected_duration: ""
+    abort_conditions: []
+
+evasion:
+  waf_bypass: []
+  ips_evasion: []
+  rate_limit_handling: []
+
+exit_strategy:
+  cleanup_commands: []
+  evidence_preservation: []
+  report_location: ""

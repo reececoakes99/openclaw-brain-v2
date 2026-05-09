@@ -1,0 +1,16 @@
+{
+  "domain": "",
+  "first_seen": "",
+  "last_scanned": "",
+  "dns_records": {},
+  "subdomains": [],
+  "open_ports": [],
+  "ssl_info": {},
+  "technologies": [],
+  "payment_platform": "",
+  "api_endpoints": [],
+  "admin_panels": [],
+  "exposed_configs": [],
+  "misconfigurations": [],
+  "notes": ""
+}

@@ -1,0 +1,161 @@
+{
+  "timeline_id": "TIME-{{TARGET_ID}}-{{TIMESTAMP}}",
+  "target_id": "{{TARGET_ID}}",
+  "target_domain": "{{DOMAIN}}",
+  "tracking_start_date": "{{ISO8601_DATE}}",
+  "total_events": 0,
+  "events": [
+    {
+      "event_id": "EVT-001",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "discovery",
+      "exposure_level": "public",
+      "source": "OSINT / passive scan",
+      "notes": "Target identified via subdomain enumeration",
+      "confidence": "high",
+      "indicators": [
+        ""
+      ],
+      "related_iocs": []
+    },
+    {
+      "event_id": "EVT-002",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "port_scan",
+      "exposure_level": "active_recon",
+      "source": "nmap scan",
+      "notes": "Discovered open ports: 443, 8443, 8080",
+      "confidence": "confirmed",
+      "indicators": [
+        "port:443",
+        "port:8443",
+        "port:8080"
+      ],
+      "related_iocs": []
+    },
+    {
+      "event_id": "EVT-003",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "tech_identify",
+      "exposure_level": "active_recon",
+      "source": "wappalyzer / http fingerprint",
+      "notes": "Identified backend as Java Spring Boot 5.x, frontend React 18.x",
+      "confidence": "high",
+      "indicators": [
+        "x-powered-by:Spring",
+        "react_version:18"
+      ],
+      "related_iocs": []
+    },
+    {
+      "event_id": "EVT-004",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "misconfig_found",
+      "exposure_level": "high",
+      "source": "manual test / nuclei",
+      "notes": "RabbitMQ management console exposed without authentication",
+      "confidence": "confirmed",
+      "indicators": [
+        "http://{{DOMAIN}}:15672/api/",
+        "default_credentials:guest:guest"
+      ],
+      "related_iocs": [
+        "TGT-{{TARGET_ID}}-MISCFG-001"
+      ]
+    },
+    {
+      "event_id": "EVT-005",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "breach_mentioned",
+      "exposure_level": "dark_web",
+      "source": "dark web monitoring / intelligence feed",
+      "notes": "Target domain mentioned in dark web forum post discussing payment gateway vulnerabilities",
+      "confidence": "medium",
+      "indicators": [
+        "forum_post_id:XXXXX"
+      ],
+      "related_iocs": []
+    },
+    {
+      "event_id": "EVT-006",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "cve_published",
+      "exposure_level": "threat_intel",
+      "source": "NVD / vendor advisory",
+      "notes": "CVE-XXXX-XXXXX published affecting detected Spring Boot version",
+      "confidence": "confirmed",
+      "indicators": [
+        "CVE-XXXX-XXXXX"
+      ],
+      "related_iocs": []
+    },
+    {
+      "event_id": "EVT-007",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "vulnerability_confirmed",
+      "exposure_level": "confirmed",
+      "source": "manual exploitation",
+      "notes": "Successfully exploited CVE-XXXX-XXXXX to obtain version information",
+      "confidence": "confirmed",
+      "indicators": [
+        "rce_poc_verified"
+      ],
+      "related_iocs": [
+        "VULN-001"
+      ]
+    },
+    {
+      "event_id": "EVT-008",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "engagement_start",
+      "exposure_level": "authorized",
+      "source": "authorized test scope",
+      "notes": "Formal engagement scope approved, testing window: {{START_DATE}} - {{END_DATE}}",
+      "confidence": "confirmed",
+      "indicators": [],
+      "related_iocs": []
+    },
+    {
+      "event_id": "EVT-009",
+      "date": "{{YYYY-MM-DD}}",
+      "timestamp": "{{ISO8601_DATETIME}}",
+      "event_type": "engagement_end",
+      "exposure_level": "authorized",
+      "source": "engagement completion",
+      "notes": "Engagement concluded, findings documented in report",
+      "confidence": "confirmed",
+      "indicators": [],
+      "related_iocs": []
+    }
+  ],
+  "event_types_tracked": [
+    "discovery",
+    "port_scan",
+    "tech_identify",
+    "misconfig_found",
+    "vulnerability_found",
+    "vulnerability_confirmed",
+    "breach_mentioned",
+    "cve_published",
+    "threat_intel",
+    "engagement_start",
+    "engagement_end",
+    "patch_deployed",
+    "remediation_verified"
+  ],
+  "exposure_summary": {
+    "public_exposures": 0,
+    "active_recon": 0,
+    "confirmed_vulnerabilities": 0,
+    "dark_web_mentions": 0
+  },
+  "notes": ""
+}

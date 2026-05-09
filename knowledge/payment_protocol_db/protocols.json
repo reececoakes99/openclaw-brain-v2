@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "protocols": {
+    "iso8583": {
+      "variants": ["HISO93", "HISO87", "ASCII", "BINARY", "EBCDIC"],
+      "ports": [7001, 7002, 9000, 9001],
+      "fingerprints": []
+    },
+    "spdh": {
+      "description": "Verifone SPDH terminal protocol",
+      "ports": [8000, 9000],
+      "attacks": []
+    },
+    "xflow": {
+      "description": "Verifone XFlow remote protocol",
+      "attacks": []
+    }
+  }
+}

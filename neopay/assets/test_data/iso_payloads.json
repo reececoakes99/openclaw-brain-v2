@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "description": "ISO8583 test payloads for payment gateway testing",
+  "payloads": {
+    "authorization_request": {
+      "mti": "0100",
+      "pan": "4111111111111111",
+      "processing_code": "000000",
+      "amount": "000000000100",
+      "transmission_time": "",
+      "stan": "",
+      "response_code": "",
+      "notes": "Standard authorization request - modify PAN, amount, MTI for testing"
+    },
+    "authorization_response": {
+      "mti": "0110",
+      "response_code": "00",
+      "notes": "Approve - test with different response codes (05=do not honor, 14=invalid card)"
+    },
+    "key_exchange": {
+      "mti": "0800",
+      "notes": "Zone key injection testing"
+    },
+    "network_message": {
+      "mti": "0800",
+      "field_70": "001",
+      "notes": "Network management - key exchange / echo test"
+    }
+  },
+  "field_formats": {
+    "MTI": "4-digit message type indicator",
+    "PAN": "up to 19 digits - primary account number",
+    "field_2": "PAN",
+    "field_3": "processing_code - 6 digits",
+    "field_4": "amount - 12 digits",
+    "field_7": "transmission_datetime - MMDDhhmmss",
+    "field_11": "stan - 6 digits",
+    "field_12": "local_time - hhmmss",
+    "field_13": "local_date - MMDD",
+    "field_15": "settlement_date - MMDD",
+    "field_32": "acquiring_institution_id",
+    "field_35": "track_2_data",
+    "field_37": "retrieval_reference_number",
+    "field_38": "authorization_id_response",
+    "field_39": "response_code",
+    "field_41": "card_acceptor_terminal_id",
+    "field_42": "card_acceptor_id_code",
+    "field_48": "additional_data_private",
+    "field_49": "currency_code",
+    "field_52": "pin_block",
+    "field_53": "security_related_control_info",
+    "field_54": "additional_amounts",
+    "field_64": "mac - 8 bytes hex",
+    "field_70": "network_code - 3 digits",
+    "field_128": "mac_secondary"
+  },
+  "test_notes": [
+    "Always verify authorization before testing",
+    "Use test BINs: 411111 (Visa), 550000 (MC), 340000 (Amex)",
+    "Do not test with real card numbers",
+    "Record all test payloads for evidence"
+  ]
+}

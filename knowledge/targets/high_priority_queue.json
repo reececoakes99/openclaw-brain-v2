@@ -1,0 +1,44 @@
+{
+  "schema_version": "2.0",
+  "queue_name": "high_priority_queue",
+  "generated_date": "2026-05-09T00:00:00Z",
+  "total_count": 2,
+  "targets": [
+    {
+      "target_id": "TGT-2026-003",
+      "domain": "switch.merchantpay.example.io",
+      "discovered_date": "2026-04-20",
+      "priority_score": 91,
+      "priority_tier": "P1",
+      "intel_bot_status": "active",
+      "hunter_status": "active",
+      "last_activity": "2026-05-08T23:59:00Z",
+      "scan_count": 19,
+      "findings_summary": "ISO8583 ASCII variant on port 8080, RabbitMQ management console exposed on :15672, default credential scan positive for guest:guest, JARM fingerprint matches Pulse Secure VPN"
+    },
+    {
+      "target_id": "TGT-2026-001",
+      "domain": "api.payments.examplegateway.com",
+      "discovered_date": "2026-03-15",
+      "priority_score": 85,
+      "priority_tier": "P1",
+      "intel_bot_status": "active",
+      "hunter_status": "scheduled",
+      "last_activity": "2026-05-08T14:22:00Z",
+      "scan_count": 12,
+      "findings_summary": "Exposed admin panel on :8443, self-signed SSL on port 443, outdated OpenSSL 1.0.2k,敞开了API文档Swagger UI on /api/docs"
+    },
+    {
+      "target_id": "TGT-2026-002",
+      "domain": "gateway.acmepay.example.net",
+      "discovered_date": "2026-04-02",
+      "priority_score": 72,
+      "priority_tier": "P2",
+      "intel_bot_status": "active",
+      "hunter_status": "idle",
+      "last_activity": "2026-05-07T09:15:00Z",
+      "scan_count": 8,
+      "findings_summary": "Verifone XFlow endpoint detected, SPDH traffic on port 5000, potential HSM misconfig with key Serial 00A1B2C3"
+    }
+  ]
+}

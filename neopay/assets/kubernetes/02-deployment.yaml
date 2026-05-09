@@ -1,0 +1,405 @@
+---
+# =============================================================================
+# Neopay Protocol Converter Deployment
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neopay-converter
+  namespace: neopay
+  labels:
+    app: neopay-converter
+    tier: application
+    language: java
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: neopay-converter
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: neopay-converter
+        tier: application
+        version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+        config.kubernetes.io/hash: "v1-$(date +%s)"
+    spec:
+      serviceAccountName: neopay-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
+        supplementalGroups: [10000]
+      terminationGracePeriodSeconds: 60
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: [neopay-converter]
+                topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 50
+              preference:
+                matchExpressions:
+                  - key: workload-type
+                    operator: In
+                    values: [application]
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: neopay-converter
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: neopay-converter
+      containers:
+        - name: neopay-converter
+          image: neopay/converter:1.0.0
+          imagePullPolicy: Always
+          args:
+            - "java"
+            - "-server"
+            - "-Xms512m"
+            - "-Xmx2048m"
+            - "-XX:+UseG1GC"
+            - "-XX:MaxGCPauseMillis=200"
+            - "-XX:+UseNUMA"
+            - "-XX:+AlwaysPreTouch"
+            - "-XX:+HeapDumpOnOutOfMemoryError"
+            - "-XX:HeapDumpPath=/opt/neopay/logs/heapdump.hprof"
+            - "-Djava.security.egd=file:/dev/./urandom"
+            - "-jar"
+            - "/opt/neopay/app.jar"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: jmx
+              containerPort: 7001
+              protocol: TCP
+            - name: prometheus
+              containerPort: 9090
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: neopay-config
+            - secretRef:
+                name: neopay-secrets
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: SPRING_PROFILES_ACTIVE
+              value: "production,kafka"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 12
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          volumeMounts:
+            - name: config
+              mountPath: /opt/neopay/config
+              readOnly: true
+            - name: logs
+              mountPath: /opt/neopay/logs
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 30"]
+      volumes:
+        - name: config
+          emptyDir: {}
+        - name: logs
+          emptyDir:
+            sizeLimit: 2Gi
+---
+# =============================================================================
+# Neopay Switch Deployment
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neopay-switch
+  namespace: neopay
+  labels:
+    app: neopay-switch
+    tier: application
+    language: java
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: neopay-switch
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: neopay-switch
+        tier: application
+        version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      serviceAccountName: neopay-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
+      terminationGracePeriodSeconds: 60
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: [neopay-switch]
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: neopay-switch
+          image: neopay/switch:1.0.0
+          imagePullPolicy: Always
+          args:
+            - "java"
+            - "-server"
+            - "-Xms512m"
+            - "-Xmx1536m"
+            - "-XX:+UseG1GC"
+            - "-jar"
+            - "/opt/neopay/app.jar"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: neopay-config
+            - secretRef:
+                name: neopay-secrets
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 1536Mi
+---
+# =============================================================================
+# Neopay Auth Host Deployment
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neopay-auth-host
+  namespace: neopay
+  labels:
+    app: neopay-auth-host
+    tier: application
+    language: java
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: neopay-auth-host
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: neopay-auth-host
+        tier: application
+        version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      serviceAccountName: neopay-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        fsGroup: 10000
+      containers:
+        - name: neopay-auth-host
+          image: neopay/auth-host:1.0.0
+          imagePullPolicy: Always
+          args:
+            - "java"
+            - "-server"
+            - "-Xms256m"
+            - "-Xmx768m"
+            - "-XX:+UseG1GC"
+            - "-jar"
+            - "/opt/neopay/app.jar"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: neopay-config
+            - secretRef:
+                name: neopay-secrets
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 768Mi
+---
+# =============================================================================
+# Neopay Simulator Deployment
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neopay-simulator
+  namespace: neopay
+  labels:
+    app: neopay-simulator
+    tier: simulator
+    language: java
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: neopay-simulator
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: neopay-simulator
+        tier: simulator
+        version: "1.0.0"
+    spec:
+      serviceAccountName: neopay-sa
+      containers:
+        - name: neopay-simulator
+          image: neopay/simulator:1.0.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - "java"
+            - "-server"
+            - "-Xms128m"
+            - "-Xmx256m"
+            - "-jar"
+            - "/opt/neopay/app.jar"
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: neopay-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

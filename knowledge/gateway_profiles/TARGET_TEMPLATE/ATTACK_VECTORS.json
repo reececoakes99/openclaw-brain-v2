@@ -1,0 +1,14 @@
+{
+  "primary_vector": {
+    "type": "",
+    "entry_point": "",
+    "prerequisites": [],
+    "success_probability": 0.0,
+    "risk_level": "",
+    "execution_steps": []
+  },
+  "secondary_vectors": [],
+  "evasion_plan": {},
+  "persistence_plan": {},
+  "exfiltration_plan": {}
+}

@@ -1,0 +1,194 @@
+{
+  "profile_id": "TECH-{{TARGET_ID}}-{{TIMESTAMP}}",
+  "target_id": "{{TARGET_ID}}",
+  "target_domain": "{{DOMAIN}}",
+  "analysis_date": "{{ISO8601_DATETIME}}",
+  "stack_confidence": "high",
+  "frontend": {
+    "framework": {
+      "name": "Unknown",
+      "version": "",
+      "evidence": [],
+      "confidence": 0
+    },
+    "javascript_framework": {
+      "name": "",
+      "version": "",
+      "evidence": [],
+      "confidence": 0
+    },
+    "rendering_engine": {
+      "name": "",
+      "version": ""
+    },
+    "ui_library": {
+      "name": "",
+      "version": ""
+    }
+  },
+  "backend": {
+    "language": {
+      "name": "Unknown",
+      "version": "",
+      "evidence": [],
+      "confidence": 0
+    },
+    "framework": {
+      "name": "",
+      "version": "",
+      "evidence": [],
+      "confidence": 0
+    },
+    "application_server": {
+      "name": "",
+      "version": "",
+      "evidence": []
+    },
+    "runtime_environment": {
+      "name": "",
+      "version": ""
+    },
+    "build_tools": []
+  },
+  "payment_processing": {
+    "acquiring_bank": {
+      "name": "",
+      "bin": "",
+      "country": ""
+    },
+    "gateway_type": {
+      "name": "",
+      "variant": "",
+      "version": ""
+    },
+    "processor": {
+      "name": "",
+      "api_version": "",
+      "endpoint": ""
+    },
+    "protocols_supported": [],
+    "card_networks": [],
+    "tokenization_provider": {
+      "name": "",
+      "vault_url": "",
+      "token_format": ""
+    },
+    "fraud_detection": {
+      "provider": "",
+      "integration_type": "",
+      "endpoints": []
+    },
+    "3ds_server": {
+      "name": "",
+      "version": "",
+      "acs_url": ""
+    }
+  },
+  "database": {
+    "type": {
+      "name": "Unknown",
+      "version": "",
+      "evidence": []
+    },
+    "connection_string_exposed": false,
+    "db_host": "",
+    "db_port": 0,
+    "backend_used_for": []
+  },
+  "messaging_middleware": {
+    "broker": {
+      "name": "Unknown",
+      "version": "",
+      "management_port": 0,
+      "api_exposed": false
+    },
+    "queues": [],
+    "topics": []
+  },
+  "cache": {
+    "technology": {
+      "name": "",
+      "version": ""
+    },
+    "port": 0
+  },
+  "cdn_waf": {
+    "provider": "",
+    "version": "",
+    "ruleset": "",
+    "ip_rep_enabled": false,
+    "bot_protection": false,
+    "rate_limiting": false
+  },
+  "storage": {
+    "type": "",
+    "provider": "",
+    "bucket_public": false
+  },
+  "orchestration": {
+    "container_orchestrator": {
+      "name": "",
+      "version": ""
+    },
+    "ci_cd_pipeline": {
+      "provider": "",
+      "exposed": false
+    }
+  },
+  "third_party_integrations": [
+    {
+      "name": "",
+      "type": "",
+      "endpoint": "",
+      "data_shared": [],
+      "risk_level": "low"
+    }
+  ],
+  "hsm": {
+    "device_type": {
+      "name": "",
+      "model": "",
+      "firmware_version": ""
+    },
+    "manufacturer": "",
+    "host": "",
+    "port": 0,
+    "key_slot_count": 0,
+    "serial_number": "",
+    "firmware_version": "",
+    "last_security_update": ""
+  },
+  "cryptographic_modules": {
+    "pin_pad_lib": "",
+    "mac_library": "",
+    "encryption_algorithms": [],
+    "hash_algorithms": []
+  },
+  "security_controls": {
+    "mfa_available": false,
+    "sso_available": false,
+    "waf_deployed": false,
+    "ids_ips_deployed": false,
+    "siem_integrated": false,
+    "encryption_at_rest": false,
+    "encryption_in_transit": false
+  },
+  "software_composition": {
+    "dependencies": [],
+    "outdated_libraries": [],
+    "known_vulnerabilities": []
+  },
+  "confidence_summary": {
+    "overall_confidence": 0,
+    "frontend_confidence": 0,
+    "backend_confidence": 0,
+    "payment_stack_confidence": 0
+  },
+  "evidence_collection": {
+    "source_urls": [],
+    "source_code_snippets": [],
+    "http_headers": {},
+    "js_files_analyzed": [],
+    "certificate_info": {}
+  }
+}

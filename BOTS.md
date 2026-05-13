@@ -4,7 +4,7 @@
 
 ## Overview
 
-Four specialized bots form a unified intelligence network. Each operates independently with shared context, continuous feedback loops, and autonomous decision trees. Nothing is forgotten. Everything compounds.
+Four Specialized weaponized bots form a unified offensive network. Each operates autonomously with shared context, aggressive execution loops, and cryptographic evasion. Nothing is forgotten. Every target compounds the fleet's lethality. Everything compounds.
 
 ```
          ┌─────────────────────────────────────────┐

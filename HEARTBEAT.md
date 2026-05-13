@@ -4,11 +4,14 @@
 
 ## State Definitions
 
-| State | Definition | Heartbeat Interval |
-|---|---|---|
-| **IDLE** | No active goals, bot fleet stable, no engagement | Every 30 minutes |
-| **ACTIVE** | Goal processing, bot running, engagement in progress | Every 5 minutes |
-| **CRITICAL** | P1 target flagged, security incident, high-priority task | Every 60 seconds |
++ | State | Definition | Heartbeat Interval | Jitter Overlay |
++ |---|---|---|---|
++ | **IDLE** | No active goals, bot fleet stable, no engagement | Every 30 minutes | +/- 15% |
++ | **ACTIVE** | Goal processing, bot running, engagement in progress | Every 5 minutes | +/- 15% |
++ | **DEGRADED** | High latency, API limits hit, or sub-system failure | Every 10 minutes | +/- 15% |
++ | **STEALTH** | Evasive posture, minimizing network footprint | Every 6 hours | +/- 15% |
++ | **CRITICAL** | P1 target flagged, security incident, high-priority task | Every 60 seconds | +/- 15% |
+
 
 ---
 
@@ -39,11 +42,14 @@ Every heartbeat must include ALL fields:
    INTEL: [active/idle/error] — last: [time]
    HUNTER: [active/idle/error] — last: [time]
    OPS: [standby/active/error] — last: [time]
+ +  DECOY: [active/idle/error] — last: [time]
+ +  ARCHIVIST: [standby/active/error] — last: [time]
 
 💰 Budget
    API spend today: $[x]/$10
 
-🕐 State: [IDLE/ACTIVE/CRITICAL]
++ 🕐 State: [IDLE/ACTIVE/DEGRADED/STEALTH/CRITICAL]
++ 🔐 Auth: [HMAC-SHA256 Signature]
 ```
 
 ---
@@ -55,16 +61,16 @@ IDLE → ACTIVE
   Trigger: New goal assigned, bot triggered, engagement started
   Action: Switch to 5-minute heartbeat, notify Operator
 
-IDLE → CRITICAL
-  Trigger: Security incident, P1 target confirmed
-  Action: Switch to 60-second heartbeat, immediate Operator alert
++ IDLE / ACTIVE → STEALTH
++   Trigger: Detection of active network countermeasures or OpSec requirement
++   Action: Switch to 6-hour heartbeat, compress payload, minimize egress
 
-ACTIVE → IDLE
-  Trigger: All goals complete, bots idle, engagement finished
-  Action: Switch to 30-minute heartbeat, session summary to Operator
++ ACTIVE → DEGRADED
++   Trigger: API limits reached, >20% packet loss, or sub-bot failure
++   Action: Switch to 10-minute heartbeat, halt active engagements, wait for diagnostics
 
-ACTIVE → CRITICAL
-  Trigger: Confidence drops below 3, blocker identified, attack blocked
++ IDLE / ACTIVE / DEGRADED → CRITICAL
++   Trigger: Security incident, P1 target confirmed, blocker identified, attack blocked
   Action: Switch to 60-second heartbeat, escalation to Operator
 
 CRITICAL → ACTIVE
@@ -102,6 +108,6 @@ Confidence: [score]/10
 Action taken: [immediate response]
 Request: [what Operator needs to decide]
 Time: [timestamp]
-```
++ Auth: [HMAC-SHA256 Signature]
 
 No buffering. No waiting. Send immediately.

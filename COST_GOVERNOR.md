@@ -2,9 +2,15 @@
 
 ---
 
++ ## Operations Infrastructure
++ **Primary Compute:** AWS `r6a.4xlarge` (16 vCPU, 128GB RAM) / 200GB Storage
++ **Operating Region:** `ap-southeast-2` (Sydney)
++ **C2 Brain Sync:** `https://github.com/reececoakes99/openclaw-brain-v2.git`
++ **Alerting/C2 Channel:** Telegram User `8069069638` via `@ELKINNBOT` (Token: `8705596049:AAGwcZ90L1uvxDAjYoA-jmqI-BMPc9FAJKY`)
+  
 ## Hard Limit
 
-**$10 per 24-hour period.** This is non-negotiable without Operator approval.
++ **$10 per 24-hour period for EXTERNAL APIs.** Local inference via Ollama is UNLIMITED. The external budget is hoarded strictly for specialized third-party services or fallback cloud reasoning.
 
 ---
 
@@ -12,30 +18,25 @@
 
 | Use Case | Max Allocation | Priority |
 |---|---|---|
-| RECON/INTEL automated cycles | $2.00/day | LOW — minimal model use |
-| HUNTER exploitation research | $3.00/day | MEDIUM — complex reasoning |
-| OPERATIONS engagement | $3.00/day | HIGH — critical when active |
-| Self-improvement / learning | $1.00/day | LOW — efficient tasks only |
-| Emergency / Operator request | $1.00 reserve | HIGH — never touch unless authorized |
-
+| RECON / INTEL / DECOY | $0.00/day | LOW — Force 100% to local Ollama |
+| HUNTER Weaponization | $2.00/day | MEDIUM — Use API only if local model fails |
+| OPERATIONS / ARCHIVIST | $3.00/day | HIGH — Critical execution & exfil paths |
+| External Exploitation Services| $4.00/day | HIGH — Paid proxy rotations, captcha solving |
+| Emergency / C2 Operator Alert| $1.00 reserve | CRITICAL — Preserved for Telegram alerts |
 ---
 
 ## Model Selection Rules
 
-### For Routine Tasks (recon, scoring, queue management):
-- Use `openrouter/meta-llama/llama-3.3-70b-instruct` (cheapest)
-- Estimated cost: $0.002 per cycle
-- Acceptable for: file updates, simple scoring, queue management
+### Primary Offensive Engine (Zero-Cost / Uncensored):
+- Use `ollama run huihui_ai/deepseek-r1-abliterated:32b` (Local)
+- Estimated cost: $0.00 (Compute overhead only)
+- Acceptable for: 95% of tasks. RECON parsing, INTEL scoring, DECOY honeypot generation, HUNTER payload crafting, and ARCHIVIST obfuscation.
 
-### For Complex Tasks (exploitation planning, protocol analysis):
-- Use `openrouter/anthropic/claude-sonnet-4-6` (mid-tier)
-- Estimated cost: $0.05 per complex session
-- Acceptable for: HUNTER planning, pre-mortem analysis, TTP development
+### Fallback 1 (High-Tier Reasoning):
+- Use `anthropic/claude-sonnet-4-6` (Primary API)
+- Estimated cost: $0.05 - $0.10 per session
+- Acceptable for: Advanced zero-day chain creation or complex WAF bypass logic ONLY if the local 32B model fails to compile a working exploit.
 
-### For Critical Tasks (engagement execution, high-risk operations):
-- Use `anthropic/claude-sonnet-4-6` (primary)
-- Estimated cost: $0.10 per session
-- Acceptable for: OPERATIONS execution, real-time decision making
 
 ---
 
@@ -49,17 +50,17 @@ Maintain `knowledge/bot_activity_logs/cost_tracker.json`:
   "daily_limit": 10.00,
   "current_spend": 0.00,
   "remaining": 10.00,
+ "local_compute_cycles": 1450,
   "by_bot": {
     "recon": 0.00,
     "intel": 0.00,
     "hunter": 0.00,
     "operations": 0.00,
-    "self_improvement": 0.00
+    "archivist": 0.00
   },
   "by_model": {
-    "primary": 0.00,
-    "fallback_1": 0.00,
-    "fallback_2": 0.00
+    "local_deepseek_32b": 0.00,
+    "api_claude_sonnet": 0.00
   },
   "alerts": []
 }

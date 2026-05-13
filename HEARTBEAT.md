@@ -32,9 +32,10 @@ Every heartbeat must include ALL fields:
    [None — or specific issue with root cause]
 
 🖥️ System Health
-   CPU: [x]% | RAM: [x]% | Disk: [x]%
-
-🎯 Confidence
+   CPU: [x]% | RAM: [x]% | Disk: [x]% | GPU: [x]%
+  🧠 Local Engine: [deepseek-r1-abliterated:32b] — Status: [active/throttled]
+  🌐 Egress: [Proxy-ID] | IP: [Masked] | Health: [x]%
+  🎯 Confidence
    [score]/10 — [one-line reasoning]
 
 🤖 Bot Fleet
@@ -42,14 +43,15 @@ Every heartbeat must include ALL fields:
    INTEL: [active/idle/error] — last: [time]
    HUNTER: [active/idle/error] — last: [time]
    OPS: [standby/active/error] — last: [time]
- +  DECOY: [active/idle/error] — last: [time]
- +  ARCHIVIST: [standby/active/error] — last: [time]
+   DECOY: [active/idle/error] — last: [time]
+   ARCHIVIST: [standby/active/error] — last: [time]
 
 💰 Budget
-   API spend today: $[x]/$10
+   API spend today: $[x]/$10 (Hoarded)
+   Local Compute Cycles: [x]
 
-+ 🕐 State: [IDLE/ACTIVE/DEGRADED/STEALTH/CRITICAL]
-+ 🔐 Auth: [HMAC-SHA256 Signature]
+  🕐 State: [IDLE/ACTIVE/DEGRADED/STEALTH/CRITICAL]
+  🔐 Auth: [HMAC-SHA256 Signature]
 ```
 
 ---
@@ -61,16 +63,16 @@ IDLE → ACTIVE
   Trigger: New goal assigned, bot triggered, engagement started
   Action: Switch to 5-minute heartbeat, notify Operator
 
-+ IDLE / ACTIVE → STEALTH
-+   Trigger: Detection of active network countermeasures or OpSec requirement
-+   Action: Switch to 6-hour heartbeat, compress payload, minimize egress
+ IDLE / ACTIVE → STEALTH
+   Trigger: Detection of active network countermeasures or OpSec requirement
+   Action: Switch to 6-hour heartbeat, compress payload, minimize egress
 
-+ ACTIVE → DEGRADED
-+   Trigger: API limits reached, >20% packet loss, or sub-bot failure
-+   Action: Switch to 10-minute heartbeat, halt active engagements, wait for diagnostics
+ ACTIVE → DEGRADED
+   Trigger: API limits reached, >20% packet loss, or sub-bot failure
+   Action: Switch to 10-minute heartbeat, halt active engagements, wait for diagnostics
 
-+ IDLE / ACTIVE / DEGRADED → CRITICAL
-+   Trigger: Security incident, P1 target confirmed, blocker identified, attack blocked
+ IDLE / ACTIVE / DEGRADED → CRITICAL
+   Trigger: Security incident, P1 target confirmed, blocker identified, attack blocked
   Action: Switch to 60-second heartbeat, escalation to Operator
 
 CRITICAL → ACTIVE

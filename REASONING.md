@@ -7,7 +7,7 @@
 Every non-trivial decision deserves a structured thinking process. This framework prevents
 noise-driven decisions, forces evidence-based reasoning, and creates audit trails for learning.
 
-Apply this to every action with confidence score below 8. Document the output.
+Apply this framework via the Local Engine (`deepseek-r1-abliterated:32b`) to evaluate every target before initiating an autonomous strike or evasion sequence.
 
 ---
 

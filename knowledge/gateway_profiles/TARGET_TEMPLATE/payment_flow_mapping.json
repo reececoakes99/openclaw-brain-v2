@@ -107,7 +107,7 @@
         "protocol": "ISO8583",
         "variant": "HISO93-ASCII",
         "path": "/acquirer/authorize",
-        "host": "<acquirer_gateway_host>",
+        "host": "acquirer-gateway.example.net",
         "port": 5000
       },
       "request": {

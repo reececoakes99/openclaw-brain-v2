@@ -7,7 +7,7 @@ This directory tracks all currently monitored payment gateway targets.
 Each target gets its own JSON file:
 ```json
 {
-  "domain": "<target_domain>",
+  "domain": "example.com",
   "first_seen": "YYYY-MM-DD",
   "last_scan": "YYYY-MM-DD",
   "priority": "P1-P5",

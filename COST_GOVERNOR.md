@@ -103,6 +103,7 @@ Send Telegram alert at:
 - **90% spend reached** — "Budget 90% used ($9/$10). Only critical operations allowed."
 - **Budget exceeded** — "Budget exceeded. Awaiting Operator approval to continue."
 
+
 ---
 
 ## Neopay Cost Awareness

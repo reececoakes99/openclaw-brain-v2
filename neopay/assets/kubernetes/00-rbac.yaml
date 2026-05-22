@@ -1,0 +1,99 @@
+---
+# =============================================================================
+# Kubernetes Namespace
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: neopay
+  labels:
+    name: neopay
+    environment: production
+    managed-by: terraform
+  annotations:
+    description: "Neopay payment protocol engineering namespace"
+---
+# =============================================================================
+# Service Account
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: neopay-sa
+  namespace: neopay
+  labels:
+    app: neopay
+    tier: platform
+automountServiceAccountToken: false
+---
+# =============================================================================
+# RBAC Roles and Bindings
+# =============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: neopay-role
+  namespace: neopay
+  labels:
+    app: neopay
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets", "services", "pods", "pods/log"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "replicasets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies", "ingresses"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: neopay-rolebinding
+  namespace: neopay
+  labels:
+    app: neopay
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: neopay-role
+subjects:
+  - kind: ServiceAccount
+    name: neopay-sa
+    namespace: neopay
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: neopay-cluster-role
+  labels:
+    app: neopay
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: neopay-cluster-rolebinding
+  labels:
+    app: neopay
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: neopay-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: neopay-sa
+    namespace: neopay

@@ -1,0 +1,361 @@
+---
+# =============================================================================
+# Network Policy
+# Controls traffic flow between namespaces and pods
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Default Deny All Ingress
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: neopay
+  labels:
+    app: neopay
+    policy: default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# ---------------------------------------------------------------------------
+# Default Deny All Egress
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: neopay
+  labels:
+    app: neopay
+    policy: default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+---
+# ---------------------------------------------------------------------------
+# Application Egress Rules
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neopay-app-egress
+  namespace: neopay
+  labels:
+    app: neopay
+spec:
+  podSelector:
+    matchLabels:
+      tier: application
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS
+    - ports:
+        - port: 53
+          protocol: UDP
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+    # Allow to PostgreSQL
+    - ports:
+        - port: 5432
+      to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: neopay-postgres
+    # Allow to Redis
+    - ports:
+        - port: 6379
+      to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: neopay-redis
+    # Allow to Kafka
+    - ports:
+        - port: 9092
+      to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: neopay-kafka
+    # Allow to ZooKeeper
+    - ports:
+        - port: 2181
+      to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: neopay-zookeeper
+    # Allow to Kubernetes API
+    - ports:
+        - port: 443
+      to:
+        - namespaceSelector: {}
+          podSelector: {}
+---
+# ---------------------------------------------------------------------------
+# Database Ingress Rules
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neopay-postgres-network-policy
+  namespace: neopay
+  labels:
+    app: neopay-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: neopay-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from application pods
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              tier: application
+      ports:
+        - port: 5432
+    # Allow from monitoring pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: neopay
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 5432
+---
+# ---------------------------------------------------------------------------
+# Redis Ingress Rules
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neopay-redis-network-policy
+  namespace: neopay
+  labels:
+    app: neopay-redis
+spec:
+  podSelector:
+    matchLabels:
+      app: neopay-redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              tier: application
+      ports:
+        - port: 6379
+---
+# ---------------------------------------------------------------------------
+# Kafka Ingress Rules
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neopay-kafka-network-policy
+  namespace: neopay
+  labels:
+    app: neopay-kafka
+spec:
+  podSelector:
+    matchLabels:
+      app: neopay-kafka
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              tier: application
+      ports:
+        - port: 9092
+        - port: 9093
+    # Allow from ZooKeeper
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: neopay-zookeeper
+      ports:
+        - port: 9092
+---
+# ---------------------------------------------------------------------------
+# ZooKeeper Ingress Rules
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neopay-zookeeper-network-policy
+  namespace: neopay
+  labels:
+    app: neopay-zookeeper
+spec:
+  podSelector:
+    matchLabels:
+      app: neopay-zookeeper
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: neopay-kafka
+      ports:
+        - port: 2181
+        - port: 2888
+        - port: 3888
+---
+# ---------------------------------------------------------------------------
+# Application Ingress Rules
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neopay-app-ingress
+  namespace: neopay
+  labels:
+    app: neopay
+spec:
+  podSelector:
+    matchLabels:
+      tier: application
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+    # Allow from converter to switch
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app: neopay-converter
+    # Allow internal communication
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              tier: application
+---
+# =============================================================================
+# Ingress (External API)
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: neopay-ingress
+  namespace: neopay
+  labels:
+    app: neopay
+    tier: edge
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "5"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/limit-connections: "30"
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/auth-type: "basic"
+    nginx.ingress.kubernetes.io/auth-secret: "neopay-ingress-auth"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "10254"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.neopay.io
+        - converter.neopay.io
+        - switch.neopay.io
+      secretName: neopay-tls-secret
+  rules:
+    - host: api.neopay.io
+      http:
+        paths:
+          - path: /api/v1/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: neopay-auth-host
+                port:
+                  number: 80
+          - path: /api/v1/payments
+            pathType: Prefix
+            backend:
+              service:
+                name: neopay-converter
+                port:
+                  number: 80
+          - path: /api/v1/accounts
+            pathType: Prefix
+            backend:
+              service:
+                name: neopay-converter
+                port:
+                  number: 80
+          - path: /api/v1/webhooks
+            pathType: Prefix
+            backend:
+              service:
+                name: neopay-converter
+                port:
+                  number: 80
+    - host: converter.neopay.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: neopay-converter
+                port:
+                  number: 80
+    - host: switch.neopay.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: neopay-switch
+                port:
+                  number: 80
+---
+# =============================================================================
+# Ingress Auth Secret
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: neopay-ingress-auth
+  namespace: neopay
+type: Opaque
+stringData:
+  auth: "YXBpLXVzZXI6JDJhJDEwJE90L09XSmx4L0xTd0x5TTRjL2I4dDl0L2VKY2t4NnlwTTJ0dWV0UGhQeXh2V0hQTXdIZHJL"

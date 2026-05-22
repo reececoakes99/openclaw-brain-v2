@@ -1,0 +1,114 @@
+{
+  "scan_id": "SURF-{{TARGET_ID}}-{{TIMESTAMP}}",
+  "target_id": "{{TARGET_ID}}",
+  "target_domain": "{{DOMAIN}}",
+  "scan_date": "{{ISO8601_DATETIME}}",
+  "scanner_version": "2.0",
+  "scope": {
+    "domains": [],
+    "subdomains": [],
+    "ip_ranges": [],
+    "whois Registrar": "",
+    "registration_date": "",
+    "name_servers": []
+  },
+  "network_surface": {
+    "ports": [],
+    "services": [],
+    "protocols_observed": [],
+    "tls_versions": {
+      "TLS_1_0": false,
+      "TLS_1_1": false,
+      "TLS_1_2": true,
+      "TLS_1_3": false
+    }
+  },
+  "ssl_certificate": {
+    "subject_cn": "",
+    "issuer_cn": "",
+    "valid_from": "",
+    "valid_until": "",
+    "serial_number": "",
+    "signature_algorithm": "",
+    "public_key_algorithm": "",
+    "key_size": 0,
+    "self_signed": false,
+    "certificate_chain": [],
+    "issues": []
+  },
+  "web_surface": {
+    "exposed_endpoints": [],
+    "http_methods_allowed": {
+      "GET": false,
+      "POST": false,
+      "PUT": false,
+      "DELETE": false,
+      "PATCH": false,
+      "OPTIONS": false,
+      "HEAD": false
+    },
+    "response_headers": {},
+    "waf_detected": false,
+    "cdn_detected": false,
+    "cdn_provider": "",
+    "redirects_observed": [],
+    "cookies": []
+  },
+  "admin_panels": {
+    "discovered": [],
+    "accessibility": "unknown"
+  },
+  "api_documentation": {
+    "swagger_ui": false,
+    "openapi_docs": false,
+    "graphql_introspection": false,
+    "api_discovery": false,
+    "endpoints_found": []
+  },
+  "misconfigurations": {
+    "dns": [],
+    "tls": [],
+    "http": [],
+    "cors": {},
+    "authentication": [],
+    "session_management": []
+  },
+  "fingerprinting": {
+    "jarm_fingerprint": "",
+    "ja3_hashes": [],
+    "wappalyzer_results": {},
+    "http_fingerprint": {
+      "server_banner": "",
+      "x_powered_by": "",
+      "via_header": ""
+    },
+    "tls_fingerprint": ""
+  },
+  "exposed_files": {
+    "txt": [],
+    "json": [],
+    "xml": [],
+    "sql": [],
+    "log": [],
+    "backup": [],
+    "config": []
+  },
+  "third_party_services": {
+    "cloud_providers": [],
+    "analytics": [],
+    "advertising": [],
+    "payment_processors": [],
+    "csp_domains": []
+  },
+  "notes": "",
+  "scan_duration_seconds": 0,
+  "tools_used": [
+    "nmap",
+    "amass",
+    "httpx",
+    "nuclei",
+    "testssl",
+    "wappalyzer",
+    "curl"
+  ]
+}

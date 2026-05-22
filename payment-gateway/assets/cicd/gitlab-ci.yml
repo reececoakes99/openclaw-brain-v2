@@ -1,0 +1,188 @@
+# Payment Gateway — GitLab CI/CD Pipeline
+# Deploys payment switch infrastructure on AWS EKS via Helm
+
+stages:
+  - build
+  - test
+  - security
+  - deploy-staging
+  - integration-test
+  - deploy-prod
+
+variables:
+  AWS_REGION: eu-west-1
+  ECR_REGISTRY: 123456789.dkr.ecr.eu-west-1.amazonaws.com
+  HELM_VALUES_STAGING: values.staging.yaml
+  HELM_VALUES_PROD: values.prod.yaml
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  DOCKER_BUILDKIT: "1"
+  TPS_THRESHOLD: "1500"
+
+.build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  before_script:
+    - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+  script:
+    - mvn clean package -DskipTests -q
+    - docker build --target payment-engine -t $ECR_REGISTRY/payment-engine:$CI_COMMIT_SHA .
+    - docker build --target payment-worker -t $ECR_REGISTRY/payment-worker:$CI_COMMIT_SHA ./worker
+    - docker push $ECR_REGISTRY/payment-engine:$CI_COMMIT_SHA
+    - docker push $ECR_REGISTRY/payment-worker:$CI_COMMIT_SHA
+  artifacts:
+    paths: [target/*.jar]
+    expire_in: 1 hour
+
+test:unit:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn test -Dspring.profiles.active=test
+    - mvn jacoco:report
+  coverage: '/Total.*?([0-9]{1,2})%/'
+  artifacts:
+    reports:
+      junit: target/surefire-reports/*.xml
+      coverage_report:
+        coverage_format: jacoco
+        path: coverage.xml
+
+test:integration:
+  stage: test
+  services:
+    - redis:7
+    - postgres:15
+  script:
+    - mvn verify -Dspring.profiles.active=integration
+  artifacts:
+    reports:
+      junit: target/surefire-reports/*.xml
+
+test:load:
+  stage: test
+  image: python:3.11
+  script:
+    - pip install locust
+    - locust -f tests/load/locustfile.py --headless -t 60s -r 100 -H https://staging.neopay.example.com --csv results --html results/report.html
+    - |
+      TPS=$(tail -n1 results/stats_history.csv | cut -d',' -f2)
+      if (( $(echo "$TPS < $TPS_THRESHOLD" | bc -l) )); then
+        echo "FAIL: TPS $TPS below threshold $TPS_THRESHOLD"
+        exit 1
+      fi
+      echo "PASS: TPS $TPS >= threshold $TPS_THRESHOLD"
+  artifacts:
+    paths: [results/]
+    expire_in: 7 days
+  allow_failure: false
+
+security:trivy:
+  stage: security
+  image: aquasec/trivy:latest
+  script:
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL $ECR_REGISTRY/payment-engine:$CI_COMMIT_SHA || true
+  allow_failure: true
+
+security:sonarqube:
+  stage: security
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST -Dsonar.token=$SONAR_TOKEN
+  variables:
+    SONAR_HOST: https://sonarqube.neopay.example.com
+
+security:sign:
+  stage: security
+  image: chainguard/crane:latest
+  script:
+    - cosign sign --yes $ECR_REGISTRY/payment-engine:$CI_COMMIT_SHA
+  only:
+    - main
+    - tags
+  variables:
+    COSIGN_KEY: $COSIGN_PRIVATE_KEY
+
+deploy:staging:
+  stage: deploy-staging
+  image: bitnami/kubectl:latest
+  environment:
+    name: staging
+    url: https://staging.neopay.example.com
+    on_stop: rollback:staging
+  script:
+    - aws eks update-kubeconfig --region $AWS_REGION --name neopay-staging --kubeconfig /tmp/kubeconfig
+    - export KUBECONFIG=/tmp/kubeconfig
+    - helm upgrade --install payment-engine ./helm \
+        --namespace payment-staging \
+        --create-namespace \
+        --set image.tag=$CI_COMMIT_SHA \
+        --set env=staging \
+        --values $HELM_VALUES_STAGING \
+        --timeout 5m --wait --atomic
+    - kubectl rollout status deployment/payment-engine -n payment-staging --timeout=120s
+    - |
+      curl -sf https://staging.neopay.example.com/health || exit 1
+      python tests/smoke/test_iso8583.py --env staging --count 20 || exit 1
+
+rollback:staging:
+  stage: deploy-staging
+  image: bitnami/kubectl:latest
+  environment:
+    name: staging
+    action: stop
+  script:
+    - aws eks update-kubeconfig --region $AWS_REGION --name neopay-staging --kubeconfig /tmp/kubeconfig
+    - export KUBECONFIG=/tmp/kubeconfig
+    - helm rollback payment-engine -n payment-staging
+  when: manual
+
+test:iso8583:
+  stage: integration-test
+  image: python:3.11
+  script:
+    - pip install -r requirements.txt
+    - python tests/integration/iso8583_validation.py --env staging --host staging.neopay.example.com
+    - python tests/integration/hsm_test.py --validate-pin-block --validate-mac
+  artifacts:
+    reports:
+      junit: results/*.xml
+
+deploy:prod:
+  stage: deploy-prod
+  image: bitnami/kubectl:latest
+  environment:
+    name: production
+    url: https://neopay.example.com
+    on_stop: rollback:prod
+  when: manual
+  script:
+    - aws eks update-kubeconfig --region $AWS_REGION --name neopay-production --kubeconfig /tmp/kubeconfig
+    - export KUBECONFIG=/tmp/kubeconfig
+    - |
+      helm upgrade --install payment-engine ./helm \
+        --namespace payment-prod \
+        --create-namespace \
+        --set image.tag=$CI_COMMIT_SHA \
+        --set env=production \
+        --values $HELM_VALUES_PROD \
+        --timeout 10m --wait --atomic
+    - |
+      ERROR_RATE=$(curl -sf https://neopay.example.com/metrics | grep 'payment_errors_total' | awk '{print $2}')
+      if (( $(echo "$ERROR_RATE > 0.01" | bc -l) )); then
+        echo "FAIL: Error rate $ERROR_RATE > 1%, rolling back..."
+        helm rollback payment-engine -n payment-prod
+        exit 1
+      fi
+      echo "PASS: Error rate $ERROR_RATE <= 1%"
+
+rollback:prod:
+  stage: deploy-prod
+  image: bitnami/kubectl:latest
+  environment:
+    name: production
+    action: stop
+  script:
+    - aws eks update-kubeconfig --region $AWS_REGION --name neopay-production --kubeconfig /tmp/kubeconfig
+    - export KUBECONFIG=/tmp/kubeconfig
+    - helm rollback payment-engine -n payment-prod
+  when: manual

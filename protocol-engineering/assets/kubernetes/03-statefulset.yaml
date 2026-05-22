@@ -1,0 +1,413 @@
+---
+# =============================================================================
+# PostgreSQL StatefulSet
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neopay-postgres
+  namespace: neopay
+  labels:
+    app: neopay-postgres
+    tier: database
+spec:
+  serviceName: neopay-postgres
+  replicas: 2
+  selector:
+    matchLabels:
+      app: neopay-postgres
+  template:
+    metadata:
+      labels:
+        app: neopay-postgres
+        tier: database
+        version: "15.4"
+    spec:
+      serviceAccountName: neopay-sa
+      terminationGracePeriodSeconds: 120
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: [neopay-postgres]
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: postgres
+          image: postgres:15.4-alpine
+          args:
+            - "postgres"
+            - "-c"
+            - "max_connections=200"
+            - "-c"
+            - "shared_buffers=256MB"
+            - "-c"
+            - "effective_cache_size=1GB"
+            - "-c"
+            - "maintenance_work_mem=128MB"
+            - "-c"
+            - "checkpoint_completion_target=0.9"
+            - "-c"
+            - "wal_buffers=16MB"
+            - "-c"
+            - "default_statistics_target=100"
+            - "-c"
+            - "random_page_cost=1.1"
+            - "-c"
+            - "effective_io_concurrency=4"
+            - "-c"
+            - "max_wal_size=2GB"
+            - "-c"
+            - "min_wal_size=80MB"
+            - "-c"
+            - "log_destination=csvlog"
+            - "-c"
+            - "logging_collector=on"
+            - "-c"
+            - "log_connections=on"
+            - "-c"
+            - "log_disconnections=on"
+            - "-c"
+            - "log_lock_waits=on"
+            - "-c"
+            - "archive_mode=on"
+            - "-c"
+            - "wal_level=hot_standby"
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: "neopay_ledger"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: neopay-secrets
+                  key: DB_USERNAME
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neopay-secrets
+                  key: DB_PASSWORD
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "neopay_app", "-d", "neopay_ledger"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "neopay_app", "-d", "neopay_ledger"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+              subPath: data
+            - name: postgres-config
+              mountPath: /etc/postgresql/conf.d
+          securityContext:
+            readOnlyRootFilesystem: false
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: neopay-postgres-pvc
+        - name: postgres-config
+          configMap:
+            name: neopay-postgres-config
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+        namespace: neopay
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: gp3
+        resources:
+          requests:
+            storage: 100Gi
+---
+# =============================================================================
+# Kafka StatefulSet (using Strimzi Kafka)
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neopay-kafka
+  namespace: neopay
+  labels:
+    app: neopay-kafka
+    tier: messaging
+spec:
+  serviceName: neopay-kafka
+  replicas: 3
+  selector:
+    matchLabels:
+      app: neopay-kafka
+  template:
+    metadata:
+      labels:
+        app: neopay-kafka
+        tier: messaging
+    spec:
+      terminationGracePeriodSeconds: 300
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: [neopay-kafka]
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: kafka-init
+          image: confluentinc/cp-kafka:7.5.2
+          command: ["sh", "-c", "echo Configuring brokers..."]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:7.5.2
+          ports:
+            - name: kafka
+              containerPort: 9092
+              protocol: TCP
+            - name: kafka-host
+              containerPort: 9093
+              protocol: TCP
+            - name: jmx
+              containerPort: 9999
+              protocol: TCP
+          env:
+            - name: KAFKA_BROKER_ID
+              valueFrom:
+                ordinalIndexAttribute: {}
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "neopay-zookeeper:2181"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://$(POD_NAME).neopay-kafka.$(POD_NAMESPACE).svc.cluster.local:9092,PLAINTEXT_HOST://localhost:9093"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "PLAINTEXT"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "3"
+            - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+              value: "2"
+            - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: "3"
+            - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+              value: "false"
+            - name: KAFKA_LOG_RETENTION_HOURS
+              value: "168"
+            - name: KAFKA_LOG_SEGMENT_BYTES
+              value: "1073741824"
+            - name: KAFKA_NUM_PARTITIONS
+              value: "12"
+            - name: KAFKA_MESSAGE_MAX_BYTES
+              value: "1048576"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /var/lib/kafka/data
+          livenessProbe:
+            exec:
+              command: ["kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: kafka-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: gp3
+        resources:
+          requests:
+            storage: 20Gi
+---
+# =============================================================================
+# ZooKeeper StatefulSet
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neopay-zookeeper
+  namespace: neopay
+  labels:
+    app: neopay-zookeeper
+    tier: messaging
+spec:
+  serviceName: neopay-zookeeper
+  replicas: 3
+  selector:
+    matchLabels:
+      app: neopay-zookeeper
+  template:
+    metadata:
+      labels:
+        app: neopay-zookeeper
+        tier: messaging
+    spec:
+      terminationGracePeriodSeconds: 60
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: [neopay-zookeeper]
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: zookeeper
+          image: confluentinc/cp-zookeeper:7.5.2
+          ports:
+            - name: client
+              containerPort: 2181
+              protocol: TCP
+            - name: election
+              containerPort: 2888
+              protocol: TCP
+            - name: leader-election
+              containerPort: 3888
+              protocol: TCP
+          env:
+            - name: ZOOKEEPER_CLIENT_PORT
+              value: "2181"
+            - name: ZOOKEEPER_TICK_TIME
+              value: "2000"
+            - name: ZOOKEEPER_INIT_LIMIT
+              value: "5"
+            - name: ZOOKEEPER_SYNC_LIMIT
+              value: "2"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: zookeeper-data
+              mountPath: /var/lib/zookeeper/data
+          livenessProbe:
+            exec:
+              command: ["zookeeperReady.sh"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["zookeeperReady.sh"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: zookeeper-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: gp3
+        resources:
+          requests:
+            storage: 5Gi
+---
+# =============================================================================
+# Redis StatefulSet
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neopay-redis
+  namespace: neopay
+  labels:
+    app: neopay-redis
+    tier: cache
+spec:
+  serviceName: neopay-redis
+  replicas: 3
+  selector:
+    matchLabels:
+      app: neopay-redis
+  template:
+    metadata:
+      labels:
+        app: neopay-redis
+        tier: cache
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: [neopay-redis]
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          command: ["redis-server", "--requirepass", "$(REDIS_PASSWORD)", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru", "--appendonly", "yes"]
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neopay-secrets
+                  key: REDIS_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: gp3
+        resources:
+          requests:
+            storage: 1Gi

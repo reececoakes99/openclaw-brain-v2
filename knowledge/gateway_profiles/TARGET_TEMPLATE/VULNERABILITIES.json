@@ -1,0 +1,17 @@
+{
+  "last_updated": "",
+  "findings": [
+    {
+      "id": "",
+      "title": "",
+      "severity": "CRITICAL|HIGH|MEDIUM|LOW",
+      "cvss": 0.0,
+      "type": "",
+      "description": "",
+      "evidence": "",
+      "exploitable": true,
+      "exploitation_date": "",
+      "status": "confirmed|potential|theoretical"
+    }
+  ]
+}

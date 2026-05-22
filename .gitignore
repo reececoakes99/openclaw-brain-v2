@@ -1,0 +1,36 @@
+# Secrets - never commit
+.env
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Session and runtime state
+*.pyc
+__pycache__/
+.openclaw/backup/
+.openclaw/alerts/
+
+# SQLite databases (contain engagement data)
+*.db
+*.sqlite
+*.sqlite3
+
+# Evidence and captures (too large + sensitive)
+*.pcap
+*.cap
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary
+/tmp/
+*.tmp

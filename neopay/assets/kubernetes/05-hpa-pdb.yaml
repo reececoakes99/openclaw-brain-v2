@@ -1,0 +1,250 @@
+---
+# =============================================================================
+# Horizontal Pod Autoscaler
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Neopay Converter HPA
+# ---------------------------------------------------------------------------
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: neopay-converter-hpa
+  namespace: neopay
+  labels:
+    app: neopay-converter
+    tier: application
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: neopay-converter
+  minReplicas: 3
+  maxReplicas: 20
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+  metrics:
+    # CPU metric
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    # Memory metric
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    # Custom metric: Kafka consumer lag
+    - type: Pods
+      pods:
+        metric:
+          name: kafka_consumer_lag_sum
+        target:
+          type: AverageValue
+          averageValue: "1000"
+    # Custom metric: Request rate
+    - type: External
+      external:
+        metric:
+          name: nginx_ingress_controller_request_latency_sum
+          selector:
+            matchLabels:
+              ingress: neopay-ingress
+        target:
+          type: AverageValue
+          averageValue: "500m"
+---
+# ---------------------------------------------------------------------------
+# Neopay Switch HPA
+# ---------------------------------------------------------------------------
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: neopay-switch-hpa
+  namespace: neopay
+  labels:
+    app: neopay-switch
+    tier: application
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: neopay-switch
+  minReplicas: 3
+  maxReplicas: 15
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+# ---------------------------------------------------------------------------
+# Neopay Auth Host HPA
+# ---------------------------------------------------------------------------
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: neopay-auth-host-hpa
+  namespace: neopay
+  labels:
+    app: neopay-auth-host
+    tier: application
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: neopay-auth-host
+  minReplicas: 2
+  maxReplicas: 10
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 15
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 65
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75
+---
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Neopay Converter PDB
+# ---------------------------------------------------------------------------
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: neopay-converter-pdb
+  namespace: neopay
+  labels:
+    app: neopay-converter
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: neopay-converter
+---
+# ---------------------------------------------------------------------------
+# Neopay Switch PDB
+# ---------------------------------------------------------------------------
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: neopay-switch-pdb
+  namespace: neopay
+  labels:
+    app: neopay-switch
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: neopay-switch
+---
+# ---------------------------------------------------------------------------
+# Neopay Auth Host PDB
+# ---------------------------------------------------------------------------
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: neopay-auth-host-pdb
+  namespace: neopay
+  labels:
+    app: neopay-auth-host
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: neopay-auth-host
+---
+# ---------------------------------------------------------------------------
+# PostgreSQL PDB
+# ---------------------------------------------------------------------------
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: neopay-postgres-pdb
+  namespace: neopay
+  labels:
+    app: neopay-postgres
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: neopay-postgres
+---
+# ---------------------------------------------------------------------------
+# Kafka PDB
+# ---------------------------------------------------------------------------
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: neopay-kafka-pdb
+  namespace: neopay
+  labels:
+    app: neopay-kafka
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: neopay-kafka

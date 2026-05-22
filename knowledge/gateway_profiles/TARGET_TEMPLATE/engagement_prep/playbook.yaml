@@ -1,0 +1,446 @@
+# OpenClaw Brain v2 — Attack Playbook Template
+
+version: "2.0"
+generated_date: "{{ISO8601_DATETIME}}"
+target_id: "{{TARGET_ID}}"
+target_domain: "{{DOMAIN}}"
+
+# ============================================================
+# PRE-ENGAGEMENT CHECKLIST
+# ============================================================
+pre_engagement_checklist:
+  authorization:
+    - name: "Written authorization obtained"
+      status: "pending"
+      notes: ""
+    - name: "Scope documented and signed"
+      status: "pending"
+      notes: ""
+    - name: "Rules of engagement defined"
+      status: "pending"
+      notes: ""
+    - name: "Emergency contacts exchanged"
+      status: "pending"
+      notes: ""
+    - name: "Kill switch confirmed"
+      status: "pending"
+      notes: ""
+
+  recon_completion:
+    - name: "Surface scan complete"
+      status: "pending"
+    - name: "Tech stack identified"
+      status: "pending"
+    - name: "Payment flow mapped"
+      status: "pending"
+    - name: "Vulnerability findings documented"
+      status: "pending"
+    - name: "Attack vectors documented"
+      status: "pending"
+    - name: "Exposure timeline started"
+      status: "pending"
+
+  tool_preparation:
+    - name: "Attack VMs ready"
+      status: "pending"
+    - name: "Network positioning verified (VPN/proxy)"
+      status: "pending"
+    - name: "Payload library validated"
+      status: "pending"
+    - name: "Exploit frameworks updated"
+      status: "pending"
+    - name: "C2 infrastructure staged"
+      status: "pending"
+    - name: "Logging/Monitoring active"
+      status: "pending"
+
+  legal_compliance:
+    - name: "Safe harbor clauses reviewed"
+      status: "pending"
+    - name: "PCI DSS testing restrictions noted"
+      status: "pending"
+    - name: "Data handling requirements confirmed"
+      status: "pending"
+    - name: "Reporting requirements defined"
+      status: "pending"
+
+# ============================================================
+# ATTACK SEQUENCE
+# ============================================================
+attack_sequence:
+  phase_1_reconnaissance:
+    order: 1
+    name: "Reconnaissance & Enumeration"
+    objectives:
+      - "Map full attack surface"
+      - "Identify entry points"
+      - "Confirm tech stack fingerprints"
+    steps:
+      - step: 1.1
+        action: "Passive OSINT"
+        commands:
+          - "amass enum -passive -d {{DOMAIN}}"
+          - "theHarvester -d {{DOMAIN}} -b all"
+          - "subfinder -d {{DOMAIN}}"
+        expected_output: "Subdomain list, email addresses, employee names"
+        tools_used: ["amass", "theHarvester", "subfinder"]
+        abort_if: "Target domain appears in government/critical infrastructure blocklist"
+        continue_on_fail: true
+
+      - step: 1.2
+        action: "Active Port Scanning"
+        commands:
+          - "nmap -p 1-65535 -sT -sV -O --script=default {{TARGET_IP}}"
+          - "nmap -p 443,8080,8443,5000,5001,15672 -sV --script=http-title,ssl-cert {{TARGET_IP}}"
+        expected_output: "Open ports, services, versions, OS detection"
+        tools_used: ["nmap"]
+        abort_if: "Port scan causes immediate network alerts"
+        continue_on_fail: false
+
+      - step: 1.3
+        action: "Web Surface Enumeration"
+        commands:
+          - "ffuf -w /usr/share/wordlists/dirb/common.txt -u https://{{DOMAIN}}/FUZZ"
+          - "gobuster dir -u https://{{DOMAIN}} -w /usr/share/wordlists/dirb/common.txt"
+        expected_output: "Discovered paths, admin panels, API endpoints"
+        tools_used: ["ffuf", "gobuster"]
+        abort_if: "WAF blocks all requests after 100 attempts"
+        continue_on_fail: true
+
+      - step: 1.4
+        action: "SSL/TLS Analysis"
+        commands:
+          - "testssl --jsonfile /tmp/{{TARGET_ID}}_ssl.json {{DOMAIN}}"
+        expected_output: "TLS version issues, weak ciphers, certificate problems"
+        tools_used: ["testssl.sh"]
+        abort_if: "Scan causes TLS handshake failures"
+        continue_on_fail: true
+
+  phase_2_initial_access:
+    order: 2
+    name: "Initial Access"
+    objectives:
+      - "Obtain initial foothold"
+      - "Identify authentication mechanisms"
+      - "Map session management"
+    steps:
+      - step: 2.1
+        action: "Admin Panel Assessment"
+        commands:
+          - "curl -k https://{{DOMAIN}}:8443/admin/login -s | grep -i 'login\\|password\\|admin'"
+          - "test_default_creds.py --target {{DOMAIN}}:8443 --service admin"
+        expected_output: "Login page content, credential validation behavior"
+        tools_used: ["curl", "custom_script"]
+        abort_if: "Account lockout detected after 3 failed attempts"
+        continue_on_fail: true
+
+      - step: 2.2
+        action: "API Endpoint Probing"
+        commands:
+          - "ffuf -w /usr/share/wordlists/api_endpoints.txt -u https://{{DOMAIN}}/FUZZ -mc 200,201,204,401,403"
+          - "curl -X OPTIONS https://{{DOMAIN}}/api/v1/ -H 'Origin: https://{{DOMAIN}}'"
+        expected_output: "Accessible endpoints, CORS policy, HTTP methods"
+        tools_used: ["ffuf", "curl"]
+        abort_if: "API rate limiting kicks in"
+        continue_on_fail: true
+
+      - step: 2.3
+        action: "Default Credential Testing"
+        commands:
+          - "hydra -L default_users.txt -P default_passwords.txt https://{{DOMAIN}}:8443 admin-get"
+          - "test_default_creds.py --target rabbitmq --port 15672"
+        expected_output: "Working credentials or confirmation none exist"
+        tools_used: ["hydra", "custom_script"]
+        abort_if: "Mass credential attempts cause account lockout"
+        continue_on_fail: true
+
+  phase_3_exploitation:
+    order: 3
+    name: "Exploitation & Foothold"
+    objectives:
+      - "Exploit confirmed vulnerabilities"
+      - "Establish persistence"
+      - "Escalate privileges"
+    steps:
+      - step: 3.1
+        action: "Protocol Exploitation (ISO8583/SPDH)"
+        commands:
+          - "send_iso8583.py --target {{TARGET_IP}} --port 8080 --payload malicious_pan.hex"
+          - "spoof_spdh.py --target {{TARGET_IP}} --port 5000 --seq 99999"
+        expected_output: "Protocol response or timeout/error"
+        tools_used: ["custom_scripts"]
+        abort_if: "Transaction causes financial loss to real entity"
+        continue_on_fail: true
+
+      - step: 3.2
+        action: "Web Application Exploitation"
+        commands:
+          - "nuclei -t cves/ -l urls.txt -var target={{DOMAIN}}"
+          - "sqlmap -u 'https://{{DOMAIN}}/api/transactions?id=1' --risk=2 --level=3"
+        expected_output: "Confirmed vulnerabilities with PoC"
+        tools_used: ["nuclei", "sqlmap"]
+        abort_if: "Injection causes database corruption"
+        continue_on_fail: true
+
+      - step: 3.3
+        action: "Message Queue Poisoning"
+        commands:
+          - "curl -X GET http://{{DOMAIN}}:15672/api/overview -u guest:guest"
+          - "publish_malicious_queue.py --url http://{{DOMAIN}}:15672 --vhost / --queue payment.auth"
+        expected_output: "Queue listing, ability to publish messages"
+        tools_used: ["curl", "custom_script"]
+        abort_if: "Message injection causes production payment failures"
+        continue_on_fail: true
+
+  phase_4_post_exploitation:
+    order: 4
+    name: "Post-Exploitation"
+    objectives:
+      - "Document impact"
+      - "Identify sensitive data access"
+      - "Map internal network"
+    steps:
+      - step: 4.1
+        action: "Sensitive Data Access"
+        commands:
+          - "curl -X GET 'http://{{DOMAIN}}:15672/api/queues/%2f/card_data/GET' -u guest:guest"
+          - "grep -r 'pan\\|cvv\\|pin\\|track' /tmp/dumps/"
+        expected_output: "Confirmation of data exposure (no actual data exfil)"
+        tools_used: ["curl", "grep"]
+        abort_if: "Actual card data accessed"
+        continue_on_fail: true
+
+      - step: 4.2
+        action: "Internal Network Mapping"
+        commands:
+          - "curl http://{{DOMAIN}}:15672/api/nodes"
+          - "dnsenum internal.{{DOMAIN}}"
+        expected_output: "Internal hostnames, network topology hints"
+        tools_used: ["curl", "dnsenum"]
+        abort_if: "Scanning causes network disruption"
+        continue_on_fail: true
+
+      - step: 4.3
+        action: "HSM Probing"
+        commands:
+          - "nmap -p 1234,5678 {{TARGET_IP}} --script=hsm-info"
+        expected_output: "HSM model, firmware version, key slots"
+        tools_used: ["nmap"]
+        abort_if: "HSM operations cause transaction failures"
+        continue_on_fail: true
+
+# ============================================================
+# PAYLOAD SELECTION
+# ============================================================
+payload_selection:
+  iso8583_payloads:
+    - name: "ISO8583 PIN Block Fuzz"
+      path: "payload_templates/iso8583/pin_block_fuzz.hex"
+      usage: "Fuzz DE52 (PIN Data) field with malformed ISO9564 blocks"
+      target: "ISO8583 message processor"
+      risk_level: "high"
+
+    - name: "ISO8583 Message Replay"
+      path: "payload_templates/iso8583/message_replay.py"
+      usage: "Replay captured valid transaction with modified fields"
+      target: "Transaction processor"
+      risk_level: "high"
+
+    - name: "ISO8583 ARQC Bypass"
+      path: "payload_templates/iso8583/arqc_bypass.hex"
+      usage: "Crafted message that bypasses ARQC verification"
+      target: "HSM/ARQC validator"
+      risk_level: "critical"
+
+  spdh_payloads:
+    - name: "SPDH Desync Attack"
+      path: "payload_templates/spdh/desync.py"
+      usage: "Send malformed sequence to desynchronize terminal"
+      target: "SPDH listener"
+      risk_level: "medium"
+
+    - name: "SPDH Message Injection"
+      path: "payload_templates/spdh/inject.py"
+      usage: "Inject custom transaction data into POS flow"
+      target: "Transaction capture"
+      risk_level: "medium"
+
+  web_payloads:
+    - name: "SQL Injection Template"
+      path: "payload_templates/web/sql_injection.txt"
+      usage: "Test for SQL injection on API parameters"
+      target: "API endpoints"
+      risk_level: "high"
+
+    - name: "SSRF Probe List"
+      path: "payload_templates/web/ssrf_probes.txt"
+      usage: "Test SSRF on URL parameters"
+      target: "Webhook callbacks"
+      risk_level: "medium"
+
+    - name: "JWT Manipulation"
+      path: "payload_templates/web/jwt_manipulation.py"
+      usage: "Test JWT alg:none, weak secrets"
+      target: "Session authentication"
+      risk_level: "high"
+
+  api_payloads:
+    - name: "GraphQL Introspection Disable"
+      path: "payload_templates/api/graphql_introspection.py"
+      usage: "Attempt to disable GraphQL introspection"
+      target: "GraphQL endpoint"
+      risk_level: "low"
+
+    - name: "API Fuzzing Template"
+      path: "payload_templates/api/fuzzing_rules.yaml"
+      usage: "Mass parameter fuzzing for API endpoints"
+      target: "REST API"
+      risk_level: "medium"
+
+  hsm_payloads:
+    - name: "HSM Key Slot Enumeration"
+      path: "payload_templates/hsm/key_slot_enum.py"
+      usage: "Enumerate HSM key slots via vendor-specific commands"
+      target: "HSM management port"
+      risk_level: "high"
+
+    - name: "PIN Block Format 0 Injection"
+      path: "payload_templates/hsm/pin_block_inject.hex"
+      usage: "Inject PIN block in ISO9564 Format 0 with null PIN"
+      target: "PIN processing"
+      risk_level: "critical"
+
+# ============================================================
+# ABORT CONDITIONS
+# ============================================================
+abort_conditions:
+  financial_impact:
+    - condition: "Test transaction results in actual charge to real card"
+      action: "Immediately halt all transaction-generating tests"
+      escalation: "Contact engagement manager within 5 minutes"
+
+    - condition: "HSM operations cause production key failures"
+      action: "Stop all HSM probing, document incident"
+      escalation: "Engagement suspension until root cause confirmed"
+
+    - condition: "Transaction processor begins rejecting legitimate traffic"
+      action: "Cease all protocol testing immediately"
+      escalation: "Full engagement halt pending review"
+
+  detection_alerts:
+    - condition: "SOC detects active exploitation attempt"
+      action: "All testing pauses, engagement manager notified"
+      escalation: "Determine if authorization still valid"
+
+    - condition: "WAF begins blocking all traffic from attack infrastructure"
+      action: "Switch to clean proxy infrastructure before resuming"
+      escalation: "Update tooling if persistent"
+
+    - condition: "Account lockout policy triggered on production systems"
+      action: "Stop all authentication testing"
+      escalation: "Document lockout behavior in findings"
+
+  safety_triggers:
+    - condition: "Target confirms production system in test scope"
+      action: "All active exploitation halted pending clarification"
+      escalation: "Require explicit re-authorization"
+
+    - condition: "Legal representative requests pause"
+      action: "Immediate full stop on all activities"
+      escalation: "Legal review before resumption"
+
+  time_boundaries:
+    - condition: "Testing window expires"
+      action: "Complete current test, document state, halt"
+      escalation: "Request extension if critical findings pending"
+
+# ============================================================
+# EXPECTED OUTCOMES
+# ============================================================
+expected_outcomes:
+  critical_findings:
+    - finding: "ISO8583 PIN block injection successful"
+      impact: "Attacker can verify stolen PIN offline"
+      evidence_required: "Modified transaction log, ARQC bypass confirmation"
+      report_section: "Payment Protocol Security"
+
+    - finding: "RabbitMQ default credentials valid"
+      impact: "Full message queue control, potential RCE"
+      evidence_required: "Screenshots of queue listing, vhost access"
+      report_section: "Authentication & Messaging"
+
+    - finding: "Admin panel authentication bypass"
+      impact: "Full gateway control, transaction manipulation"
+      evidence_required: "Admin session cookie, account creation proof"
+      report_section: "Web Application Security"
+
+  high_findings:
+    - finding: "Unauthenticated API access to transaction data"
+      impact: "PCI DSS violation, sensitive data disclosure"
+      evidence_required: "API response showing PII/transaction data"
+      report_section: "API Security"
+
+    - finding: "Self-signed SSL on production gateway"
+      impact: "MITM attack feasibility"
+      evidence_required: "SSL scan output showing self-signed cert"
+      report_section: "Cryptographic Configuration"
+
+  informative_findings:
+    - finding: "Swagger UI publicly accessible"
+      impact: "Increased attack surface disclosure"
+      evidence_required: "Screenshot of exposed API docs"
+      report_section: "Information Disclosure"
+
+# ============================================================
+# CLEANUP PROCEDURE
+# ============================================================
+cleanup_procedure:
+  created_accounts:
+    - action: "Remove any test admin accounts created during engagement"
+      verification: "Confirm account deletion via API or login attempt"
+      documentation: "Record username and deletion timestamp"
+
+  test_data:
+    - action: "Delete any test transactions submitted during testing"
+      verification: "Confirm transaction deletion in gateway logs"
+      documentation: "Record transaction IDs and deletion proof"
+
+  modified_configurations:
+    - action: "Revert any test modifications to gateway configuration"
+      verification: "Compare pre/post configs"
+      documentation: "Record config changes made and reverted"
+
+  artifacts:
+    - action: "Securely erase any captured PCAP files, log dumps"
+      verification: "Confirm file deletion"
+      documentation: "Maintain findings report without raw data"
+      notes: "Retain only sanitized evidence for reporting"
+
+  infrastructure:
+    - action: "Tear down attack VMs and C2 infrastructure"
+      verification: "Confirm no active connections to target"
+      documentation: "Record infrastructure teardown timestamp"
+
+  final_verification:
+    - action: "Confirm target is not retaining any test data"
+      verification: "Final log review for any remaining test artifacts"
+      documentation: "Sign-off on clean state"
+
+# ============================================================
+# NOTES
+# ============================================================
+notes: |
+  This playbook is for authorized security testing only.
+  
+  All testing must comply with PCI DSS v4.0 requirements for
+  penetration testing, including:
+  
+  - Defined scope and boundaries
+  - Skilled assessors
+  - Minimal impact on production systems
+  - Proper cleanup procedures
+  - Comprehensive reporting
+  
+  Review abort conditions before each phase.
+  Update payload selection based on tech stack findings.
+  Document all findings with timestamps for timeline tracking.

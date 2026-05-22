@@ -1,0 +1,277 @@
+{
+  "mapping_id": "FLOW-{{TARGET_ID}}-{{TIMESTAMP}}",
+  "target_id": "{{TARGET_ID}}",
+  "target_domain": "{{DOMAIN}}",
+  "analysis_date": "{{ISO8601_DATETIME}}",
+  "payment_flow_version": "1.0",
+  "flow_summary": {
+    "total_steps": 0,
+    "flow_type": "",
+    "transaction_types_supported": [],
+    "start_endpoints": [],
+    "end_endpoints": []
+  },
+  "payment_flow_steps": [
+    {
+      "step_number": 1,
+      "step_name": "Initiation",
+      "phase": "consumer",
+      "description": "",
+      "entry_point": {
+        "type": "api_endpoint",
+        "method": "POST",
+        "path": "/v1/transactions/initiate",
+        "host": "{{DOMAIN}}"
+      },
+      "request": {
+        "content_type": "application/json",
+        "fields": [],
+        "sensitive_fields": [
+          "card_number",
+          "cvv",
+          "pin"
+        ],
+        "tokenized_fields": []
+      },
+      "response": {
+        "status_code": 200,
+        "fields": [],
+        "session_tokens": []
+      },
+      "data_handling": {
+        "encryption": "TLS 1.2",
+        "pci_scope": true,
+        "card_data_transit": "encrypted",
+        "storage_after": "prohibited"
+      },
+      "protocol_layer": "HTTPS/REST",
+      "security_controls": [
+        "TLS mutual authentication",
+        "request signing"
+      ],
+      "potential_intercepts": [],
+      "next_step": 2
+    },
+    {
+      "step_number": 2,
+      "step_name": "Risk Scoring",
+      "phase": "gateway",
+      "description": "",
+      "entry_point": {
+        "type": "internal_service_call",
+        "method": "RPC",
+        "path": "/risk/score",
+        "host": "risk-engine.internal"
+      },
+      "request": {
+        "content_type": "application/json",
+        "fields": [
+          "transaction_id",
+          "amount",
+          "card_hash",
+          "customer_id",
+          "device_fingerprint"
+        ],
+        "sensitive_fields": [],
+        "tokenized_fields": ["card_hash"]
+      },
+      "response": {
+        "status_code": 200,
+        "fields": [
+          "risk_score",
+          "decision",
+          "factors"
+        ]
+      },
+      "data_handling": {
+        "encryption": "AES-256-GCM",
+        "pci_scope": false,
+        "card_data_transit": "token_only",
+        "storage_after": "allowed_token_only"
+      },
+      "protocol_layer": "gRPC/AES256",
+      "security_controls": [
+        "mTLS between services",
+        "HMAC verification"
+      ],
+      "potential_intercepts": [],
+      "next_step": 3
+    },
+    {
+      "step_number": 3,
+      "step_name": "Scheme Authorization",
+      "phase": "acquirer",
+      "description": "",
+      "entry_point": {
+        "type": "protocol_message",
+        "protocol": "ISO8583",
+        "variant": "HISO93-ASCII",
+        "path": "/acquirer/authorize",
+        "host": "<acquirer_gateway_host>",
+        "port": 5000
+      },
+      "request": {
+        "iso8583_fields": {
+          "MTI": "0100",
+          "PAN": "encrypted_pin_block",
+          "ProcessingCode": "",
+          "Amount": "",
+          "DateTime": "",
+          "STAN": "",
+          "NetworkIntlID": "",
+          "RespCode": "",
+          "TerminalID": "",
+          "MerchantID": "",
+          "CardAcceptorName": "",
+          "AdditionalAmounts": "",
+          "ICC_Data": "EMV_cryptogram",
+          "CurrencyCode": "",
+          "PIN_Data": "encrypted_iso9564_format0"
+        }
+      },
+      "response": {
+        "MTI": "0110",
+        "RespCode": "00",
+        "auth_code": ""
+      },
+      "data_handling": {
+        "encryption": "ARQC/ARPC",
+        "pci_scope": true,
+        "card_data_transit": "pin_block_iso9564",
+        "storage_after": "prohibited"
+      },
+      "protocol_layer": "ISO8583-ASCII/TCP",
+      "security_controls": [
+        "HSM PIN translation",
+        "ARQC verification",
+        "MAC ISO9797-1"
+      ],
+      "potential_intercepts": [],
+      "next_step": 4
+    },
+    {
+      "step_number": 4,
+      "step_name": "Authorization Response",
+      "phase": "gateway",
+      "description": "",
+      "entry_point": {
+        "type": "internal_service_call",
+        "method": "RPC",
+        "path": "/settlement/enqueue",
+        "host": "settlement.internal"
+      },
+      "request": {
+        "fields": [
+          "transaction_id",
+          "auth_code",
+          "RespCode",
+          "settle_amount",
+          "currency"
+        ]
+      },
+      "response": {
+        "status_code": 200,
+        "fields": [
+          "queue_id",
+          "settlement_date"
+        ]
+      },
+      "data_handling": {
+        "encryption": "AES-256-GCM",
+        "pci_scope": false
+      },
+      "protocol_layer": "gRPC/AES256",
+      "security_controls": [
+        "message authentication"
+      ],
+      "potential_intercepts": [],
+      "next_step": null
+    }
+  ],
+  "endpoints": {
+    "initiation": [],
+    "callback": [],
+    "webhook": [],
+    "status_check": [],
+    "refund": [],
+    "void": []
+  },
+  "token_handling": {
+    "tokenization_provider": "",
+    "token_format": "",
+    "vault_location": "",
+    "tokens_observed": [],
+    "token_lifetime": "",
+    "token_reuse_allowed": false
+  },
+  "webhook_callbacks": [
+    {
+      "webhook_id": "WH-001",
+      "event_type": "transaction.completed",
+      "url": "",
+      "method": "POST",
+      "payload_fields": [],
+      "authentication": {
+        "type": "HMAC",
+        "header": "X-Signature",
+        "algorithm": "SHA256"
+      },
+      "retry_policy": {
+        "max_retries": 3,
+        "retry_delay_seconds": 60
+      },
+      "timeout_seconds": 30,
+      "verification_required": false,
+      "tls_version": "",
+      "issues": []
+    },
+    {
+      "webhook_id": "WH-002",
+      "event_type": "transaction.failed",
+      "url": "",
+      "method": "POST",
+      "payload_fields": [],
+      "authentication": {
+        "type": "none",
+        "header": "",
+        "algorithm": ""
+      },
+      "retry_policy": {
+        "max_retries": 3,
+        "retry_delay_seconds": 60
+      },
+      "timeout_seconds": 30,
+      "verification_required": false,
+      "tls_version": "",
+      "issues": [
+        {
+          "severity": "High",
+          "type": "Missing Authentication",
+          "description": "Webhook lacks signature verification — attacker can forge transaction events"
+        }
+      ]
+    }
+  ],
+  "data_flow_visualization": {
+    "plantuml": "",
+    "mermaid": ""
+  },
+  "error_handling": {
+    "common_error_codes": [],
+    "timeout_behavior": "",
+    "retry_mechanisms": [],
+    "fallback_procedures": []
+  },
+  "session_management": {
+    "session_token_format": "",
+    "session_lifetime": "",
+    "refresh_mechanism": "",
+    "logout_procedure": ""
+  },
+  "pci_dss_considerations": {
+    "scope_diagram": "",
+    "cardholder_data_environment_isolated": false,
+    "network_segmentation": "",
+    "key_hierarchy": ""
+  }
+}

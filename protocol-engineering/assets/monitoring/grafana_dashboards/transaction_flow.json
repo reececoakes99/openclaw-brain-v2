@@ -1,0 +1,24 @@
+{
+  "title": "Transaction Flow Timing",
+  "uid": "payment-switch-txn-flow",
+  "version": 1,
+  "panels": [
+    {"id": 1, "title": "End-to-End Transaction Flow Breakdown", "type": "bargauge",
+      "targets": [
+        {"expr": "histogram_quantile(0.99, rate(txn_flow_dns_seconds_bucket[5m])) * 1000", "legendFormat": "DNS"},
+        {"expr": "histogram_quantile(0.99, rate(txn_flow_tcp_seconds_bucket[5m])) * 1000", "legendFormat": "TCP Connect"},
+        {"expr": "histogram_quantile(0.99, rate(txn_flow_tls_seconds_bucket[5m])) * 1000", "legendFormat": "TLS Handshake"},
+        {"expr": "histogram_quantile(0.99, rate(txn_flow_queue_seconds_bucket[5m])) * 1000", "legendFormat": "Queue Wait"},
+        {"expr": "histogram_quantile(0.99, rate(txn_flow_processing_seconds_bucket[5m])) * 1000", "legendFormat": "Processing"},
+        {"expr": "histogram_quantile(0.99, rate(txn_flow_response_seconds_bucket[5m])) * 1000", "legendFormat": "Response"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "ms"}},
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 0}
+    }
+  ],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["payment-switch", "latency", "flow"]
+}

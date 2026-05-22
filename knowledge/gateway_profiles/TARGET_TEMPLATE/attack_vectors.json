@@ -1,0 +1,307 @@
+{
+  "vectors_id": "VECT-{{TARGET_ID}}-{{TIMESTAMP}}",
+  "target_id": "{{TARGET_ID}}",
+  "target_domain": "{{DOMAIN}}",
+  "analysis_date": "{{ISO8601_DATETIME}}",
+  "total_vectors": 0,
+  "vectors_by_priority": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 0
+  },
+  "vectors": [
+    {
+      "vector_id": "VEC-001",
+      "name": "ISO8583 PIN Block Injection",
+      "type": "protocol",
+      "category": "cryptographic",
+      "target_component": "ISO8583 message processor",
+      "affected_endpoints": [],
+      "prerequisites": [
+        "Man-in-the-middle position on network path to HSM",
+        "Network access to ISO8583 port"
+      ],
+      "exploitability": "Medium",
+      "impact": "Critical",
+      "cvss_base_score": 9.1,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:H/I:H/A:N",
+      "priority": "P1",
+      "test_procedure": {
+        "phase": "preparation",
+        "steps": [
+          "1. Establish MITM position using ettercap or similar",
+          "2. Capture baseline ISO8583 traffic",
+          "3. Identify HSM key slot in use",
+          "4. Prepare malicious PIN block with ISO9564 Format 0"
+        ],
+        "phase": "execution",
+        "steps": [
+          "5. Inject crafted ISO8583 message with modified DE52 (PIN Data)",
+          "6. Use PIN block format that bypasses ARQC verification",
+          "7. Monitor for authorization approval response"
+        ],
+        "phase": "verification",
+        "steps": [
+          "8. Check if fraudulent transaction was logged",
+          "9. Verify no fraud alerts triggered",
+          "10. Document exact PIN block that succeeded"
+        ]
+      },
+      "payload_example": {
+        "mti": "0100",
+        "de52": "04123456789ABCDEF123456789ABCDEF123456789ABCDEF123456789ABCDEF",
+        "de53": "0110010100",
+        "iso9306_bits": "......"
+      },
+      "detection_signatures": [
+        "ARQC verification failure count spike",
+        "Unusual PIN block format in logs",
+        "Network anomalies on ISO8583 port"
+      ],
+      "evasion_techniques": [
+        "Use valid cryptogram from legitimate transaction",
+        "Timing attack: inject during low-volume window",
+        "Fragment packets to avoid deep inspection"
+      ],
+      "expected_outcome": "Attacker can verify stolen PIN offline or redirect funds",
+      "remediation": "Enable ARPC response verification, implement PIN block format validation at HSM",
+      "references": [
+        "PCI DSS v4.0 Requirement 3.5",
+        "ISO9564-1:2002",
+        "HISO93 specification"
+      ]
+    },
+    {
+      "vector_id": "VEC-002",
+      "name": "Admin Panel Authentication Bypass",
+      "type": "web",
+      "category": "authentication",
+      "target_component": "Admin web interface",
+      "affected_endpoints": [
+        "https://{{DOMAIN}}:{{PORT}}/admin/login"
+      ],
+      "prerequisites": [
+        "Access to admin panel port (typically 8443, 443 with /admin path)",
+        "Knowledge of username format"
+      ],
+      "exploitability": "High",
+      "impact": "Critical",
+      "cvss_base_score": 9.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+      "priority": "P1",
+      "test_procedure": {
+        "phase": "enumeration",
+        "steps": [
+          "1. Identify admin panel location via surface scan",
+          "2. Enumerate username patterns via responses",
+          "3. Test default credential pairs",
+          "4. Attempt credential stuffing with common admin creds"
+        ],
+        "phase": "exploitation",
+        "steps": [
+          "5. Submit crafted authentication request",
+          "6. Manipulate session cookies if applicable",
+          "7. Exploit password reset functionality",
+          "8. Harvest admin session token"
+        ],
+        "phase": "persistence",
+        "steps": [
+          "9. Create backdoor admin account",
+          "10. Export payment processing keys",
+          "11. Modify transaction routing rules"
+        ]
+      },
+      "payload_example": {
+        "endpoint": "/admin/login",
+        "username": "admin",
+        "password": "{{CUSTOM_PASSWORD}}"
+      },
+      "detection_signatures": [
+        "Failed login spike from single IP",
+        "Admin panel access from non-corporate IP range",
+        "Unusual admin API calls"
+      ],
+      "evasion_techniques": [
+        "Use residential proxy pool",
+        "Distribute login attempts over 24+ hours",
+        "Rotate User-Agent headers"
+      ],
+      "expected_outcome": "Full admin access; ability to manipulate transactions, create fake merchants, export card data",
+      "remediation": "Implement MFA on admin panel, restrict to IP allowlist, implement WAF rate limiting",
+      "references": [
+        "OWASP Authentication Cheat Sheet",
+        "PCI DSS v4.0 Requirement 8.3"
+      ]
+    },
+    {
+      "vector_id": "VEC-003",
+      "name": "RabbitMQ Management API Exploitation",
+      "type": "api",
+      "category": "messaging_broker",
+      "target_component": "RabbitMQ Management Plugin",
+      "affected_endpoints": [
+        "http://{{DOMAIN}}:15672/api/",
+        "http://{{DOMAIN}}:15672/api/definitions",
+        "http://{{DOMAIN}}:15672/api/exchanges"
+      ],
+      "prerequisites": [
+        "RabbitMQ management port (15672) exposed to attacker",
+        "Default credentials guest:guest or weak credential"
+      ],
+      "exploitability": "High",
+      "impact": "High",
+      "cvss_base_score": 8.1,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N",
+      "priority": "P2",
+      "test_procedure": {
+        "phase": "reconnaissance",
+        "steps": [
+          "1. Enumerate RabbitMQ management API version",
+          "2. Check API documentation at /api/index.html",
+          "3. Test default credentials via GET /api/whoami",
+          "4. Enumerate exchanges, queues, bindings"
+        ],
+        "phase": "exploitation",
+        "steps": [
+          "5. Retrieve vhost definitions (credentials stored in definitions export)",
+          "6. Enumerate channel connections to identify payment message flows",
+          "7. Publish malicious messages to payment queues",
+          "8. Monitor for downstream effects"
+        ],
+        "phase": "lateral_movement",
+        "steps": [
+          "9. Use Erlang cookie to establish distributed Erlang connection",
+          "10. Execute arbitrary code via rabbitmqctl or rpc大力"
+        ]
+      },
+      "payload_example": {
+        "method": "POST",
+        "endpoint": "/api/exchanges/%2f/publish",
+        "auth": "guest:guest",
+        "body": {
+          "properties": {},
+          "routing_key": "payment.authorization",
+          "payload": "base64_encoded_malicious_message",
+          "payload_encoding": "string"
+        }
+      },
+      "detection_signatures": [
+        "Management API access from external IPs",
+        "Unusual queue activity or message flooding",
+        "API calls to /definitions endpoint",
+        "Erlang distribution port (25672) probes"
+      ],
+      "evasion_techniques": [
+        "Low-volume probing to avoid rate limit",
+        "Use legitimate RabbitMQ client to blend traffic"
+      ],
+      "expected_outcome": "Payment message injection, message queue poisoning, potential RCE via Erlang distribution",
+      "remediation": "Disable RabbitMQ management plugin externally, enforce strong auth, use TLS for AMQP",
+      "references": [
+        "RabbitMQ Security Guide",
+        "CVE-2023-45867 (RabbitMQ默认凭证)"
+      ]
+    },
+    {
+      "vector_id": "VEC-004",
+      "name": "SPDH Protocol Desynchronization",
+      "type": "protocol",
+      "category": "POS_protocol",
+      "target_component": "Verifone XFlow / SPDH listener",
+      "affected_endpoints": [],
+      "prerequisites": [
+        "Network access to SPDH port (typically 5000-5010)",
+        "Knowledge of terminal ID format"
+      ],
+      "exploitability": "Medium",
+      "impact": "High",
+      "cvss_base_score": 7.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N",
+      "priority": "P2",
+      "test_procedure": {
+        "phase": "probing",
+        "steps": [
+          "1. Identify SPDH service using Verifone fingerprint patterns",
+          "2. Capture baseline SPDH handshake messages",
+          "3. Analyze message sequence numbers"
+        ],
+        "phase": "exploitation",
+        "steps": [
+          "4. Send desynchronization message with incorrect sequence",
+          "5. Exploit replay window to insert custom transaction data",
+          "6. Verify transaction captured or modified"
+        ]
+      },
+      "payload_example": {
+        "protocol": "SPDH",
+        "message_type": "XFlow.Transaction.Request",
+        "sequence_mismatch": true,
+        "payload_hex": "48540000..."
+      },
+      "detection_signatures": [
+        "SPDH sequence number gaps",
+        "Duplicate transaction IDs",
+        "Invalid cryptographic checksums"
+      ],
+      "expected_outcome": "Transaction capture or modification at POS level",
+      "remediation": "Implement sequence verification, encrypt SPDH channel with TLS",
+      "references": [
+        "Verifone XFlow Protocol Specification"
+      ]
+    },
+    {
+      "vector_id": "VEC-005",
+      "name": "Swagger UI Information Disclosure",
+      "type": "web",
+      "category": "information_disclosure",
+      "target_component": "API documentation endpoint",
+      "affected_endpoints": [
+        "https://{{DOMAIN}}/api/docs",
+        "https://{{DOMAIN}}/swagger-ui.html",
+        "https://{{DOMAIN}}/api-docs"
+      ],
+      "prerequisites": [
+        "API documentation publicly accessible"
+      ],
+      "exploitability": "High",
+      "impact": "Medium",
+      "cvss_base_score": 5.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
+      "priority": "P3",
+      "test_procedure": {
+        "phase": "enumeration",
+        "steps": [
+          "1. Enumerate API documentation endpoints",
+          "2. Extract full API schema including hidden endpoints",
+          "3. Identify parameter names for injection vectors",
+          "4. Map business logic from operation IDs"
+        ],
+        "phase": "followup",
+        "steps": [
+          "5. Use schema to identify additional attack surface",
+          "6. Test each endpoint for common vulnerabilities"
+        ]
+      },
+      "payload_example": {
+        "endpoint": "/api/docs"
+      },
+      "detection_signatures": [
+        "Swagger UI access logs",
+        "High volume of OPTIONS/GET requests to API endpoints"
+      ],
+      "expected_outcome": "Full API schema disclosure enabling targeted attacks",
+      "remediation": "Restrict /api/docs to internal IPs, implement API key auth on docs",
+      "references": [
+        "OWASP API Security Top 10 #2"
+      ]
+    }
+  ],
+  "top_impact_vectors": [],
+  "testing_schedule": {
+    "p1_vectors_scheduled": true,
+    "p2_vectors_scheduled": false,
+    "p3_vectors_scheduled": false,
+    "estimated_test_hours": 0
+  },
+  "notes": ""
+}

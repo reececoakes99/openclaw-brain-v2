@@ -1,0 +1,22 @@
+{
+  "description": "Test card numbers for authorized payment gateway testing only",
+  "visa_test": [
+    {"pan": "4111111111111111", "type": "Visa", "brand": "Classic"},
+    {"pan": "4111111111111112", "type": "Visa", "brand": "Gold"},
+    {"pan": "4242424242424242", "type": "Visa", "brand": "Disputed"}
+  ],
+  "mastercard_test": [
+    {"pan": "5500000000000004", "type": "MC", "brand": "Standard"},
+    {"pan": "5555555555554444", "type": "MC", "brand": "World"}
+  ],
+  "amex_test": [
+    {"pan": "340000000000009", "type": "Amex", "brand": "Classic"}
+  ],
+  "bin_ranges": {
+    "visa": {"start": "4", "length": 16, "test_range": "411111"},
+    "mastercard": {"start": "5", "length": 16, "test_range": "550000-559999"},
+    "amex": {"start": "3", "length": 15, "test_range": "340000"},
+    "discover": {"start": "6", "length": 16, "test_range": "601100"},
+    "maestro": {"start": "5", "length": 19, "test_range": "500000"}
+  }
+}

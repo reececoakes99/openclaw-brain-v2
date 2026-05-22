@@ -1,0 +1,142 @@
+# Prometheus Alerting Rules for Payment Switch
+groups:
+  - name: payment_switch_alerts
+    interval: 30s
+    rules:
+      - alert: PaymentSwitchTPSLow
+        expr: payment_transactions_total / 60 < 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Payment switch TPS below threshold"
+          description: "Transaction throughput {{ $value }} TPS is below 100 for 5 minutes"
+          runbook: "Check scheme interface connectivity and message broker health"
+
+      - alert: PaymentSwitchErrorRateHigh
+        expr: rate(payment_errors_total[5m]) / rate(payment_transactions_total[5m]) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payment switch error rate exceeds 1%"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 1%)"
+          runbook: "Check HSM connectivity, database errors, and scheme interface status"
+
+      - alert: PaymentSwitchLatencyHigh
+        expr: histogram_quantile(0.99, rate(payment_request_duration_seconds_bucket[5m])) > 5
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payment switch p99 latency above 5 seconds"
+          description: "p99 latency is {{ $value }}s for 3 minutes"
+          runbook: "Check HSM queue depth, message broker lag, and database performance"
+
+      - alert: PaymentSwitchQueueDepthHigh
+        expr: payment_queue_depth > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Message queue depth elevated"
+          description: "Queue depth is {{ $value }} messages"
+          runbook: "Check consumer health and processing rate"
+
+      - alert: HSMPoolUtilizationHigh
+        expr: hsm_connection_pool_used / hsm_connection_pool_total > 0.80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HSM connection pool above 80%"
+          description: "HSM pool utilization at {{ $value | humanizePercentage }}"
+          runbook: "Check HSM connectivity and increase pool size if needed"
+
+      - alert: SchemeInterfaceDown
+        expr: up{job="scheme-interface"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Scheme interface is down"
+          description: "Scheme interface {{ $labels.instance }} is unreachable"
+          runbook: "Check network connectivity to scheme network and interface service"
+
+      - alert: MessageQueueLag
+        expr: kafka_consumer_lag_messages > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag above 10,000 messages"
+          description: "Consumer lag is {{ $value }} messages on topic {{ $labels.topic }}"
+          runbook: "Scale consumer instances or check for processing errors"
+
+      - alert: CertificateExpiryWarning
+        expr: certificate_expiry_days < 30
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "TLS certificate expires in {{ $value }} days"
+          description: "Certificate for {{ $labels.instance }} expires in {{ $value }} days"
+          runbook: "Renew TLS certificate before expiry to avoid service disruption"
+
+      - alert: CertificateExpiryCritical
+        expr: certificate_expiry_days < 7
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "TLS certificate expires in less than 7 days"
+          description: "Certificate for {{ $labels.instance }} expires in {{ $value }} days"
+          runbook: "URGENT: Renew TLS certificate immediately"
+
+      - alert: DiskSpaceWarning
+        expr: disk_used_percent > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space above 80%"
+          description: "Disk {{ $labels.device }} on {{ $labels.instance }} at {{ $value }}%"
+          runbook: "Clean up old logs and transaction archives"
+
+      - alert: MemoryUtilizationHigh
+        expr: memory_used_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory utilization above 85%"
+          description: "Memory on {{ $labels.instance }} at {{ $value }}%"
+          runbook: "Check for memory leaks and consider scaling up"
+
+      - alert: HSMOpsPerSecondHigh
+        expr: rate(hsm_operations_total[5m]) > 900
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HSM operations approaching limit"
+          description: "HSM ops/sec at {{ $value }} (limit: 1000)"
+          runbook: "Consider HSM capacity increase or optimize key caching"
+
+  - name: payment_switch_recording
+    interval: 60s
+    rules:
+      - record: payment:tps:5m
+        expr: rate(payment_transactions_total[5m])
+
+      - record: payment:error_rate:5m
+        expr: rate(payment_errors_total[5m]) / rate(payment_transactions_total[5m])
+
+      - record: payment:p99_latency:5m
+        expr: histogram_quantile(0.99, rate(payment_request_duration_seconds_bucket[5m]))
+
+      - record: payment:p95_latency:5m
+        expr: histogram_quantile(0.95, rate(payment_request_duration_seconds_bucket[5m]))
+
+      - record: payment:p50_latency:5m
+        expr: histogram_quantile(0.50, rate(payment_request_duration_seconds_bucket[5m]))

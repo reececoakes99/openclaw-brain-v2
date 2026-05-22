@@ -1,0 +1,473 @@
+# =============================================================================
+# Helm Chart Values for Neopay Protocol Engineering
+# =============================================================================
+
+# Global settings
+global:
+  imageRegistry: neopay
+  imagePullSecrets:
+    - name: neopay-registry-secret
+  storageClass: gp3
+
+# Namespace
+namespace: neopay
+
+# Application settings
+application:
+  name: neopay
+  replicaCount: 3
+  image:
+    repository: neopay/converter
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  ingress:
+    enabled: true
+    className: nginx
+    host: api.neopay.io
+    tls:
+      enabled: true
+      secretName: neopay-tls-secret
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production,kafka"
+    - name: JAVA_OPTS
+      value: "-Xms512m -Xmx2048m -XX:+UseG1GC"
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10000
+    fsGroup: 10000
+
+# Converter service
+converter:
+  enabled: true
+  nameOverride: neopay-converter
+  fullnameOverride: neopay-converter
+  replicaCount: 3
+  image:
+    repository: neopay/converter
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    httpsPort: 8443
+  ingress:
+    enabled: true
+    className: nginx
+    host: converter.neopay.io
+    path: /
+    tls:
+      enabled: true
+  probe:
+    liveness:
+      path: /actuator/health/liveness
+      initialDelaySeconds: 60
+      periodSeconds: 15
+    readiness:
+      path: /actuator/health/readiness
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    startup:
+      path: /actuator/health
+      initialDelaySeconds: 30
+      failureThreshold: 12
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  persistence:
+    enabled: false
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    hpa:
+      cpu Utilization: 70
+      memory Utilization: 80
+  nodeSelector:
+    workload-type: application
+  tolerations: []
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app: neopay-converter
+
+# Switch service
+switch:
+  enabled: true
+  nameOverride: neopay-switch
+  fullnameOverride: neopay-switch
+  replicaCount: 3
+  image:
+    repository: neopay/switch
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 1536Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+
+# Auth Host service
+authHost:
+  enabled: true
+  nameOverride: neopay-auth-host
+  replicaCount: 2
+  image:
+    repository: neopay/auth-host
+    tag: "1.0.0"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 768Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+
+# Simulator service
+simulator:
+  enabled: true
+  nameOverride: neopay-simulator
+  replicaCount: 1
+  image:
+    repository: neopay/simulator
+    tag: "1.0.0"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# PostgreSQL
+postgresql:
+  enabled: true
+  nameOverride: neopay-postgres
+  architecture: replication
+  auth:
+    database: neopay_ledger
+    username: neopay_app
+    password: ""
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: gp3
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+    podAnnotations:
+      prometheus.io/scrape: "true"
+  read:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 50Gi
+      storageClass: gp3
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Redis
+redis:
+  enabled: true
+  nameOverride: neopay-redis
+  architecture: replication
+  auth:
+    password: ""
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 1Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Kafka
+kafka:
+  enabled: true
+  nameOverride: neopay-kafka
+  replicaCount: 3
+  kraft:
+    enabled: false
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: gp3
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  topics:
+    - name: iso8583-ingress
+      partitions: 12
+      replicationFactor: 3
+      retentionHours: 168
+    - name: iso8583-egress
+      partitions: 12
+      replicationFactor: 3
+      retentionHours: 168
+    - name: settlements
+      partitions: 6
+      replicationFactor: 3
+      retentionHours: 720
+    - name: alerts
+      partitions: 3
+      replicationFactor: 3
+      retentionHours: 24
+  metrics:
+    jmx:
+      enabled: true
+    service:
+      enabled: true
+
+# Prometheus
+prometheus:
+  enabled: true
+  nameOverride: neopay-prometheus
+  server:
+    retention: 30d
+    persistentVolume:
+      enabled: true
+      size: 50Gi
+      storageClass: gp3
+  alertmanager:
+    enabled: true
+    persistentVolume:
+      enabled: true
+      size: 2Gi
+  prometheusSpec:
+    retention: 30d
+    replicaCount: 2
+  extraScrapeConfigs:
+    - job_name: neopay
+      static_configs:
+        - targets:
+            - neopay-converter:8080
+            - neopay-switch:8080
+            - neopay-auth-host:8080
+      metrics_path: /actuator/prometheus
+      scheme: http
+
+# Grafana
+grafana:
+  enabled: true
+  nameOverride: neopay-grafana
+  adminPassword: ""
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClassName: gp3
+  dashboardProviders:
+    dashboardproviders:
+      - name: default
+        orgId: 1
+        folder: Dashboards
+        type: file
+        options:
+          path: /var/lib/grafana/dashboards/default
+  dashboards:
+    default:
+      neopay-payment-flow:
+        gnetId: 10000
+        revision: 1
+        datasource: Prometheus
+      neopay-hsm-metrics:
+        gnetId: 10001
+        revision: 1
+        datasource: Prometheus
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://neopay-prometheus-server:9090
+          isDefault: true
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: api.neopay.io
+      paths:
+        - path: /api/v1/auth
+          pathType: Prefix
+          service: neopay-auth-host
+          port: 80
+        - path: /api/v1/payments
+          pathType: Prefix
+          service: neopay-converter
+          port: 80
+        - path: /api/v1/accounts
+          pathType: Prefix
+          service: neopay-converter
+          port: 80
+  tls:
+    - hosts:
+        - api.neopay.io
+        - converter.neopay.io
+        - switch.neopay.io
+      secretName: neopay-tls-secret
+
+# Service Account
+serviceAccount:
+  create: true
+  name: neopay-sa
+  annotations:
+    iam.gke.io/gcp-service-account: neopay-sa@neopay-prod.iam.gserviceaccount.com
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  converter:
+    minAvailable: 1
+  switch:
+    minAvailable: 1
+  authHost:
+    minAvailable: 1
+  postgres:
+    minAvailable: 1
+  kafka:
+    minAvailable: 2
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  application:
+    ingress:
+      - from:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: ingress-nginx
+    egress:
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: kube-system
+            podSelector:
+              matchLabels:
+                k8s-app: kube-dns
+          - podSelector:
+              matchLabels:
+                tier: database
+          - podSelector:
+              matchLabels:
+                tier: cache
+          - podSelector:
+              matchLabels:
+                tier: messaging
+
+# Service Monitoring (GKE)
+serviceMonitor:
+  enabled: false
+  interval: 15s
+  scrapeTimeout: 10s
+
+# Logging
+logging:
+  enabled: true
+  loki:
+    enabled: true
+    url: http://neopay-loki:3100
+  promtail:
+    enabled: true
+  retention: 30d
+
+# HSM Configuration
+hsm:
+  enabled: true
+  type: thales_payshield
+  host: neopay-hsm
+  port: 8888
+  connectionPoolSize: 10
+  timeout: 5000
+
+# JVM Configuration
+jvm:
+  heap:
+    min: 512m
+    max: 2048m
+  gc:
+    type: G1GC
+    maxPauseMillis: 200
+  memory:
+    numaAware: true
+    preTouch: true
+  jit:
+    tieredStopAtLevel: 1
+  gcLog:
+    enabled: true
+    path: /opt/neopay/logs
+    maxFileSize: 50M
+    maxHistory: 10
+
+# Security
+security:
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10000
+    runAsGroup: 10000
+    fsGroup: 10000
+    supplementalGroups: [10000]
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL

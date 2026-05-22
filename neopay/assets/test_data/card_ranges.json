@@ -1,0 +1,114 @@
+# Card Range Definitions for Payment System Testing
+# Covers all major card networks with regex patterns, IINs, and metadata
+
+{
+  "card_ranges": [
+    {
+      "type": "Visa",
+      "network": "Visa",
+      "iin_length": 6,
+      "patterns": [
+        {"pattern": "^4[0-9]{12}$", "iin": "400000", "description": "Classic Visa 13-digit"},
+        {"pattern": "^4[0-9]{15}$", "iin": "400000", "description": "Classic Visa 16-digit"},
+        {"pattern": "^4[0-9]{18}$", "iin": "400000", "description": "Electron (18-digit)"}
+      ],
+      "test_numbers": ["4111111111111111", "4012888888881881", "4222222222222"],
+      "currency": "USD",
+      "bin_prefixes": ["400000", "402400", "421317", "448407", "453201", "454742", "471695"]
+    },
+    {
+      "type": "Mastercard",
+      "network": "Mastercard",
+      "iin_length": 6,
+      "patterns": [
+        {"pattern": "^5[1-5][0-9]{14}$", "iin": "510000", "description": "Standard Mastercard"},
+        {"pattern": "^2[2-7][0-9]{14}$", "iin": "222100", "description": "Mastercard 2-series"}
+      ],
+      "test_numbers": ["5555555555554444", "5105105105105100", "2221000000000009"],
+      "currency": "USD",
+      "bin_prefixes": ["510000", "512000", "522200", "530500", "542400", "545600", "555500"]
+    },
+    {
+      "type": "American Express",
+      "network": "Amex",
+      "iin_length": 6,
+      "patterns": [
+        {"pattern": "^3[47][0-9]{13}$", "iin": "340000", "description": "American Express 15-digit"},
+        {"pattern": "^3[47][0-9]{14}$", "iin": "370000", "description": "American Express 16-digit"}
+      ],
+      "test_numbers": ["378282246310005", "371449635398431", "340000000000009"],
+      "currency": "USD",
+      "bin_prefixes": ["340000", "370000", "340100", "370100"]
+    },
+    {
+      "type": "Discover",
+      "network": "Discover",
+      "iin_length": 6,
+      "patterns": [
+        {"pattern": "^6011[0-9]{12}$", "iin": "601100", "description": "Discover 16-digit"},
+        {"pattern": "^65[0-9]{14}$", "iin": "650000", "description": "Discover 16-digit"},
+        {"pattern": "^64[4-9][0-9]{13}$", "iin": "644000", "description": "Discover 16-digit"}
+      ],
+      "test_numbers": ["6011111111111117", "6011000990139424", "6500000000000002"],
+      "currency": "USD",
+      "bin_prefixes": ["601100", "601120", "601122", "601124", "601125", "601126", "601127", "601128", "601129", "644000", "645000", "646000", "647000", "650000"]
+    },
+    {
+      "type": "Diners Club",
+      "network": "Diners",
+      "iin_length": 6,
+      "patterns": [
+        {"pattern": "^3[0-9]{14}$", "iin": "360000", "description": "Diners 14-digit"},
+        {"pattern": "^30[0-5][0-9]{11}$", "iin": "300000", "description": "Diners 14-digit"},
+        {"pattern": "^36[0-9]{12}$", "iin": "360000", "description": "Diners 14-digit"},
+        {"pattern": "^38[0-9]{12}$", "iin": "380000", "description": "Diners 14-digit"}
+      ],
+      "test_numbers": ["36227206271667", "38520000023237", "30000000000004"],
+      "currency": "USD",
+      "bin_prefixes": ["300000", "301000", "302000", "303000", "304000", "305000", "360000", "380000"]
+    },
+    {
+      "type": "JCB",
+      "network": "JCB",
+      "iin_length": 4,
+      "patterns": [
+        {"pattern": "^352[0-9]{15}$", "iin": "352800", "description": "JCB 16-digit"},
+        {"pattern": "^35[2-8][0-9]{14}$", "iin": "352800", "description": "JCB 16-digit"}
+      ],
+      "test_numbers": ["3566002020360505", "3528020000000009", "3530010000000000"],
+      "currency": "JPY",
+      "bin_prefixes": ["352800", "352900", "353000", "353100", "354000", "355000", "356000", "357000", "358000"]
+    },
+    {
+      "type": "UnionPay",
+      "network": "UnionPay",
+      "iin_length": 6,
+      "patterns": [
+        {"pattern": "^62[0-9]{14,17}$", "iin": "620000", "description": "UnionPay 16-19 digit"}
+      ],
+      "test_numbers": ["6200000000000005", "6212345678901234", "6288000000000000"],
+      "currency": "CNY",
+      "bin_prefixes": ["620000", "621200", "621234", "622200", "622800", "623000", "624000", "625000", "626000", "627000", "628200", "628800"]
+    },
+    {
+      "type": "Maestro",
+      "network": "Maestro",
+      "iin_length": 6,
+      "patterns": [
+        {"pattern": "^50[0-9]{14}$", "iin": "500000", "description": "Maestro"},
+        {"pattern": "^56[0-9]{14}$", "iin": "560000", "description": "Maestro"},
+        {"pattern": "^5[1-8][0-9]{14}$", "iin": "510000", "description": "Maestro"}
+      ],
+      "test_numbers": ["5018000000000007", "5641820000000005", "5890040000000000"],
+      "currency": "EUR",
+      "bin_prefixes": ["500000", "504000", "506000", "508000", "510000", "512000", "520000", "530000", "540000", "560000", "570000", "580000"]
+    }
+  ],
+  "notes": {
+    "luhn_check_required": true,
+    "cvv_length": {"Visa": 3, "Mastercard": 3, "Amex": 4, "Discover": 3, "Diners": 3, "JCB": 3, "UnionPay": 3, "Maestro": 3},
+    "expiry_format": "MMYY",
+    "issue_number_required": ["Maestro"],
+    "card_number_length": {"Visa": [13, 16], "Mastercard": [16], "Amex": [15], "Discover": [16], "Diners": [14], "JCB": [16, 17, 18, 19], "UnionPay": [16, 17, 18, 19], "Maestro": [12, 13, 14, 15, 16, 17, 18, 19]}
+  }
+}

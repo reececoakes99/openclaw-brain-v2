@@ -1,0 +1,37 @@
+{
+  "title": "Kubernetes Workloads",
+  "uid": "payment-switch-k8s",
+  "version": 1,
+  "panels": [
+    {"id": 1, "title": "Pod Status", "type": "stat",
+      "targets": [{"expr": "sum by (status) (kube_pod_status_phase{namespace=\"payment-prod\"})", "legendFormat": "{{status}}"}],
+      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+    },
+    {"id": 2, "title": "CPU Usage", "type": "timeseries",
+      "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"payment-prod\"}[5m])) by (pod)", "legendFormat": "{{pod}}"}],
+      "fieldConfig": {"defaults": {"unit": "percent"}},
+      "gridPos": {"h": 8, "w": 18, "x": 6, "y": 0}
+    },
+    {"id": 3, "title": "Memory Usage", "type": "timeseries",
+      "targets": [{"expr": "sum(container_memory_usage_bytes{namespace=\"payment-prod\"}) by (pod) / 1024 / 1024", "legendFormat": "{{pod}} MB"}],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {"id": 4, "title": "Pod Restarts", "type": "timeseries",
+      "targets": [{"expr": "sum(kube_pod_container_status_restarts_total{namespace=\"payment-prod\"}) by (pod)", "legendFormat": "{{pod}}"}],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    },
+    {"id": 5, "title": "Network I/O", "type": "timeseries",
+      "targets": [
+        {"expr": "sum(rate(container_network_receive_bytes_total{namespace=\"payment-prod\"}[5m]))", "legendFormat": "RX"},
+        {"expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"payment-prod\"}[5m]))", "legendFormat": "TX"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "Bps"}},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+    }
+  ],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["payment-switch", "kubernetes", "infra"]
+}

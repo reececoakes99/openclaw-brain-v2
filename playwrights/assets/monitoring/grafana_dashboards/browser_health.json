@@ -1,0 +1,68 @@
+{
+  "title": "Browser Health",
+  "uid": "browser-health",
+  "version": 1,
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Pool Utilization by Worker",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "sum(playwrights_browser_pool_active) by (worker_id, browser_type)", "legendFormat": "{{worker_id}}/{{browser_type}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "short", "custom": {"fillOpacity": 30}}}
+    },
+    {
+      "id": 2,
+      "title": "Crash Rate Over Time",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "sum(rate(playwrights_browser_launches_total{status=\"crashed\"}[5m])) / sum(rate(playwrights_browser_launches_total[5m])) * 100", "legendFormat": "crash rate %"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {"lineWidth": 2},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Avg Session Duration",
+      "type": "gauge",
+      "gridPos": {"h": 8, "w": 6, "x": 0, "y": 8},
+      "targets": [
+        {"expr": "avg(playwrights_browser_session_duration_seconds{browser_type=\"chromium\"})"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 4,
+      "title": "Memory Usage Per Browser (MB)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 6, "y": 8},
+      "targets": [
+        {"expr": "playwrights_browser_memory_mb{browser_type=\"chromium\"}", "legendFormat": "{{worker_id}}"}
+      ],
+      "fieldConfig": {"defaults": {"unit": "decmbytes", "custom": {"fillOpacity": 20}}}
+    },
+    {
+      "id": 5,
+      "title": "Launch Success vs Crashed",
+      "type": "piechart",
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 8},
+      "targets": [
+        {"expr": "sum(playwrights_browser_launches_total) by (status)"}
+      ]
+    }
+  ],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "datasource": {"type": "prometheus", "uid": "playwrights-prometheus"}
+}

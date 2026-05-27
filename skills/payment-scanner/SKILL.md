@@ -199,3 +199,97 @@ Writes to: `knowledge/gateway_profiles/<target>/`
 scan a payment gateway for example.com
 → triggers: gateway type detection → endpoint enumeration → tech fingerprint → write to knowledge/gateway_profiles/example.com/
 ```
+---
+
+## Extended Detection Techniques
+
+### JavaScript SDK Fingerprinting
+Payment gateways inject JS SDKs that reveal their identity:
+```javascript
+// Stripe
+window.Stripe && Stripe.version  // e.g., "3.x"
+document.querySelector('script[src*="js.stripe.com"]')
+
+// Braintree
+window.braintree && braintree.VERSION
+
+// PayPal
+window.paypal && paypal.version
+
+// Square
+window.SqPaymentForm || window.Square
+
+// Adyen
+window.AdyenCheckout
+
+// Worldpay
+window.Worldpay
+
+// Checkout.com
+window.Frames
+```
+
+### Network Request Fingerprinting
+Intercept payment form submissions to identify gateway:
+| Endpoint Pattern | Gateway |
+|---|---|
+| `api.stripe.com/v1/tokens` | Stripe |
+| `api.braintreegateway.com` | Braintree |
+| `api.paypal.com/v2/checkout` | PayPal |
+| `connect.squareup.com` | Square |
+| `checkout.adyen.com` | Adyen |
+| `secure.worldpay.com` | Worldpay |
+| `api.checkout.com` | Checkout.com |
+| `payment.hosted-page.com` | Hosted Page (generic) |
+| `secure.authorize.net` | Authorize.Net |
+| `api.paymentcloud.com` | PaymentCloud |
+
+### ISO8583 Gateway Detection
+For direct TCP/IP payment connections:
+```bash
+# Probe common ISO8583 ports
+nmap -p 5000,7000,8000,8080,8443,9000,9999 <target>
+
+# Send ISO8583 echo/network management request
+python3 neopay/scripts/parse_iso8583.py --probe <host>:<port>
+
+# Identify dialect from response header format
+# HISO93: 2-byte binary length
+# HISO87: 4-byte ASCII length  
+# VBI: Variable length indicator
+```
+
+### Gateway Profile Database
+After identification, load the gateway profile:
+```bash
+cat knowledge/gateway_profiles/<gateway_name>/profile.json
+```
+
+Profiles include:
+- Supported card types and BIN ranges
+- Tokenization format (Stripe tok_, Braintree opaque, etc.)
+- 3DS version (1.0, 2.0, 2.2)
+- Fraud detection vendor (Kount, Sift, Signifyd, in-house)
+- API versioning and authentication method
+- Known CVEs and misconfigurations
+
+### Automated Full Scan Workflow
+```bash
+# 1. Identify gateway type
+python3 pipeline/stages/stage1_recon.py --target <url>
+
+# 2. Load gateway-specific attack profile
+cat knowledge/gateway_profiles/<type>/attack_surface.md
+
+# 3. Run payment-specific nuclei templates
+nuclei -t nuclei-templates/payment/ -u <url>
+
+# 4. Fuzz payment endpoints
+python3 skills/api-fuzzer/fuzz_payment.py --target <url> --gateway <type>
+```
+
+## Integration with Bot Fleet
+- **RECON bot**: Calls payment-scanner as first step on any web target
+- **INTEL bot**: Enriches gateway profile with CVE data from cve-tracker
+- **HUNTER bot**: Uses gateway profile to select appropriate exploit chain
+- **OPERATIONS bot**: Uses gateway type to select correct exfiltration method

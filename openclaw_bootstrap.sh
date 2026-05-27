@@ -176,6 +176,304 @@ pip install aiohttp httpx python-telegram-bot python-dotenv \
 
 log_info "Python dependencies installed"
 
+
+###############################################################################
+# OFFENSIVE TOOLS INSTALLATION
+###############################################################################
+log_section "Installing Offensive Toolchain"
+
+# ── System packages ──────────────────────────────────────────────────────────
+log_info "Installing system packages..."
+apt-get update -qq > /dev/null 2>&1
+apt-get install -y -qq \
+  nmap masscan curl wget git jq unzip \
+  libpcap-dev libssl-dev build-essential \
+  python3-dev python3-pip golang-go \
+  tor proxychains4 \
+  > /dev/null 2>&1 || log_warn "Some system packages failed"
+log_info "✓ System packages installed"
+
+# ── Go tools ─────────────────────────────────────────────────────────────────
+export GOPATH="$HOME/go"
+export PATH="$PATH:$GOPATH/bin:/usr/local/go/bin"
+
+# Install Go if not present
+if ! command -v go &> /dev/null; then
+  log_info "Installing Go 1.22..."
+  GO_VERSION="1.22.3"
+  wget -q "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+  tar -C /usr/local -xzf /tmp/go.tar.gz
+  echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> /root/.bashrc
+  export PATH="$PATH:/usr/local/go/bin"
+  log_info "✓ Go installed: $(go version)"
+else
+  log_info "✓ Go already installed: $(go version)"
+fi
+
+# Nuclei — vulnerability scanner
+if ! command -v nuclei &> /dev/null; then
+  log_info "Installing Nuclei..."
+  go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest > /dev/null 2>&1 \
+    && log_info "✓ Nuclei installed" \
+    || log_warn "Nuclei install failed — try: go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
+else
+  log_info "✓ Nuclei already installed: $(nuclei --version 2>&1 | head -1)"
+fi
+
+# ffuf — web fuzzer
+if ! command -v ffuf &> /dev/null; then
+  log_info "Installing ffuf..."
+  go install -v github.com/ffuf/ffuf/v2@latest > /dev/null 2>&1 \
+    && log_info "✓ ffuf installed" \
+    || log_warn "ffuf install failed"
+else
+  log_info "✓ ffuf already installed: $(ffuf -V 2>&1 | head -1)"
+fi
+
+# Katana — web crawler
+if ! command -v katana &> /dev/null; then
+  log_info "Installing Katana..."
+  go install -v github.com/projectdiscovery/katana/cmd/katana@latest > /dev/null 2>&1 \
+    && log_info "✓ Katana installed" \
+    || log_warn "Katana install failed"
+else
+  log_info "✓ Katana already installed"
+fi
+
+# Amass — subdomain enumeration
+if ! command -v amass &> /dev/null; then
+  log_info "Installing Amass..."
+  go install -v github.com/owasp-amass/amass/v4/...@master > /dev/null 2>&1 \
+    && log_info "✓ Amass installed" \
+    || log_warn "Amass install failed"
+else
+  log_info "✓ Amass already installed"
+fi
+
+# Subfinder — passive subdomain discovery
+if ! command -v subfinder &> /dev/null; then
+  log_info "Installing Subfinder..."
+  go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest > /dev/null 2>&1 \
+    && log_info "✓ Subfinder installed" \
+    || log_warn "Subfinder install failed"
+else
+  log_info "✓ Subfinder already installed"
+fi
+
+# httpx — HTTP probing
+if ! command -v httpx &> /dev/null; then
+  log_info "Installing httpx..."
+  go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest > /dev/null 2>&1 \
+    && log_info "✓ httpx installed" \
+    || log_warn "httpx install failed"
+else
+  log_info "✓ httpx already installed"
+fi
+
+# dnsx — DNS resolution
+if ! command -v dnsx &> /dev/null; then
+  log_info "Installing dnsx..."
+  go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest > /dev/null 2>&1 \
+    && log_info "✓ dnsx installed" \
+    || log_warn "dnsx install failed"
+else
+  log_info "✓ dnsx already installed"
+fi
+
+# naabu — port scanner
+if ! command -v naabu &> /dev/null; then
+  log_info "Installing naabu..."
+  go install -v github.com/projectdiscovery/naabu/v2/cmd/naabu@latest > /dev/null 2>&1 \
+    && log_info "✓ naabu installed" \
+    || log_warn "naabu install failed"
+else
+  log_info "✓ naabu already installed"
+fi
+
+# interactsh-client — OOB interaction server
+if ! command -v interactsh-client &> /dev/null; then
+  log_info "Installing interactsh-client..."
+  go install -v github.com/projectdiscovery/interactsh/cmd/interactsh-client@latest > /dev/null 2>&1 \
+    && log_info "✓ interactsh-client installed" \
+    || log_warn "interactsh-client install failed"
+else
+  log_info "✓ interactsh-client already installed"
+fi
+
+# gau — URL fetcher (AlienVault, Wayback, Common Crawl)
+if ! command -v gau &> /dev/null; then
+  log_info "Installing gau..."
+  go install -v github.com/lc/gau/v2/cmd/gau@latest > /dev/null 2>&1 \
+    && log_info "✓ gau installed" \
+    || log_warn "gau install failed"
+else
+  log_info "✓ gau already installed"
+fi
+
+# ── Python offensive tools ────────────────────────────────────────────────────
+log_info "Installing Python offensive tools..."
+pip install \
+  sqlmap \
+  impacket \
+  scapy \
+  pwntools \
+  paramiko \
+  cryptography \
+  pycryptodome \
+  requests[socks] \
+  stem \
+  --break-system-packages > /dev/null 2>&1 || log_warn "Some Python tools failed"
+log_info "✓ Python offensive tools installed"
+
+# ── Nuclei templates ──────────────────────────────────────────────────────────
+if command -v nuclei &> /dev/null; then
+  log_info "Updating Nuclei templates..."
+  nuclei -update-templates > /dev/null 2>&1 || log_warn "Nuclei template update failed"
+  
+  # Download payment-specific templates
+  NUCLEI_TEMPLATES_DIR="$HOME/nuclei-templates"
+  mkdir -p "$NUCLEI_TEMPLATES_DIR/payment"
+  
+  # Create custom payment gateway templates
+  cat > "$NUCLEI_TEMPLATES_DIR/payment/stripe-key-exposure.yaml" << 'YAML'
+id: stripe-key-exposure
+info:
+  name: Stripe API Key Exposure
+  author: openclaw
+  severity: critical
+  tags: payment,stripe,api-key
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/js/app.js"
+      - "{{BaseURL}}/static/js/main.js"
+    matchers:
+      - type: regex
+        regex:
+          - 'sk_live_[0-9a-zA-Z]{24,}'
+          - 'pk_live_[0-9a-zA-Z]{24,}'
+YAML
+
+  cat > "$NUCLEI_TEMPLATES_DIR/payment/payment-debug-enabled.yaml" << 'YAML'
+id: payment-debug-enabled
+info:
+  name: Payment Gateway Debug Mode Enabled
+  author: openclaw
+  severity: high
+  tags: payment,debug,misconfiguration
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}/payment/debug"
+      - "{{BaseURL}}/checkout/debug"
+      - "{{BaseURL}}/api/payment/test"
+      - "{{BaseURL}}/api/v1/payment/debug"
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: word
+        words:
+          - "debug"
+          - "test_mode"
+          - "sandbox"
+        condition: or
+YAML
+
+  log_info "✓ Nuclei payment templates created"
+fi
+
+# ── Wordlists ─────────────────────────────────────────────────────────────────
+log_info "Setting up wordlists..."
+WORDLIST_DIR="$OPENCLAW_HOME/wordlists"
+mkdir -p "$WORDLIST_DIR"
+
+# Download SecLists payment-relevant wordlists
+if [ ! -f "$WORDLIST_DIR/payment_endpoints.txt" ]; then
+  cat > "$WORDLIST_DIR/payment_endpoints.txt" << 'WORDLIST'
+/payment
+/payments
+/pay
+/checkout
+/order
+/orders
+/cart
+/purchase
+/transaction
+/transactions
+/api/payment
+/api/payments
+/api/v1/payment
+/api/v2/payment
+/api/checkout
+/api/order
+/api/transaction
+/webhook
+/webhooks
+/callback
+/notify
+/ipn
+/payment/callback
+/payment/webhook
+/payment/notify
+/stripe/webhook
+/paypal/ipn
+/braintree/webhook
+/adyen/webhook
+/worldpay/notify
+/admin/payments
+/admin/transactions
+/admin/orders
+/dashboard/payments
+/portal/payments
+WORDLIST
+  log_info "✓ Payment endpoints wordlist created"
+fi
+
+if [ ! -f "$WORDLIST_DIR/api_params.txt" ]; then
+  cat > "$WORDLIST_DIR/api_params.txt" << 'WORDLIST'
+amount
+price
+total
+subtotal
+discount
+coupon
+promo
+card_number
+card_num
+pan
+cvv
+cvc
+expiry
+exp_date
+expiration
+billing_name
+billing_address
+zip
+postal_code
+country
+currency
+token
+payment_token
+card_token
+nonce
+payment_method
+payment_method_id
+source
+customer_id
+order_id
+transaction_id
+reference
+rrn
+auth_code
+WORDLIST
+  log_info "✓ API parameters wordlist created"
+fi
+
+log_info "✓ Offensive toolchain installation complete"
+log_info "Tools installed: nmap, masscan, nuclei, ffuf, katana, amass, subfinder, httpx, dnsx, naabu, gau, interactsh-client"
+
  ###############################################################################
  # OVERDRIVE STATE INITIALIZATION (CORE_INIT)
  ###############################################################################

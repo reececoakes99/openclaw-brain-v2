@@ -1,6 +1,787 @@
 {
- "capabilities": {},
- "pattern_index": {},
- "last_updated": null,
- "version": "2.0"
+  "version": "2.1",
+  "agent": "Elkin",
+  "last_updated": "2026-05-27T08:52:29.327630",
+  "capabilities": {
+    "iso8583-operator": {
+      "skill_path": "skills/iso8583-operator/SKILL.md",
+      "script_path": "neopay/scripts/parse_iso8583.py",
+      "category": "payment_protocol",
+      "bot_owner": "HUNTER",
+      "confidence_required": 7,
+      "trigger_keywords": [
+        "ISO8583",
+        "parse message",
+        "MTI",
+        "bitmap",
+        "PAN",
+        "authorization request",
+        "financial transaction",
+        "protocol fingerprint"
+      ],
+      "primary_tools": [
+        "parse_iso8583.py",
+        "fuzzer.py",
+        "echo_server.py",
+        "transaction_flow.py"
+      ],
+      "outputs": [
+        "parsed_fields_json",
+        "field_anomaly_report",
+        "protocol_fingerprint"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "hsm-operator": {
+      "skill_path": "skills/hsm-operator/SKILL.md",
+      "script_path": "neopay/scripts/hsm_simulator.py",
+      "category": "cryptographic_operations",
+      "bot_owner": "HUNTER",
+      "confidence_required": 8,
+      "trigger_keywords": [
+        "HSM",
+        "PIN block",
+        "MAC",
+        "key exchange",
+        "ARQC",
+        "ARPC",
+        "Thales",
+        "PayShield",
+        "CloudHSM",
+        "ZMK",
+        "TMK",
+        "TPK"
+      ],
+      "primary_tools": [
+        "hsm_simulator.py",
+        "mac_generator.py",
+        "pin_block.py"
+      ],
+      "outputs": [
+        "pin_block_hex",
+        "mac_value",
+        "arqc_result",
+        "key_component"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "fraud-bypass": {
+      "skill_path": "skills/fraud-bypass/SKILL.md",
+      "category": "fraud_evasion",
+      "bot_owner": "HUNTER",
+      "confidence_required": 6,
+      "trigger_keywords": [
+        "fraud engine",
+        "velocity check",
+        "Forter",
+        "Sift",
+        "Signifyd",
+        "CyberSource",
+        "SEON",
+        "Riskified",
+        "geolocation bypass",
+        "3DS bypass"
+      ],
+      "primary_tools": [
+        "curl",
+        "python3",
+        "browser_automation"
+      ],
+      "outputs": [
+        "fraud_engine_identified",
+        "bypass_technique",
+        "velocity_threshold"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "token-vault": {
+      "skill_path": "skills/token-vault/SKILL.md",
+      "category": "payment_security",
+      "bot_owner": "HUNTER",
+      "confidence_required": 7,
+      "trigger_keywords": [
+        "token",
+        "tokenization",
+        "Stripe",
+        "Braintree",
+        "vault",
+        "tok_",
+        "pi_",
+        "token-to-card",
+        "token extraction"
+      ],
+      "primary_tools": [
+        "curl",
+        "grep",
+        "python3"
+      ],
+      "outputs": [
+        "token_format_identified",
+        "provider_fingerprint",
+        "token_correlation_map"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "web-inject": {
+      "skill_path": "skills/web-inject/SKILL.md",
+      "category": "web_exploitation",
+      "bot_owner": "HUNTER",
+      "confidence_required": 7,
+      "trigger_keywords": [
+        "checkout injection",
+        "web inject",
+        "XSS",
+        "SQLi",
+        "SSRF",
+        "CSRF",
+        "payment form",
+        "webhook",
+        "GraphQL injection"
+      ],
+      "primary_tools": [
+        "curl",
+        "sqlmap",
+        "ffuf",
+        "nuclei"
+      ],
+      "outputs": [
+        "injection_point",
+        "payload_result",
+        "vulnerability_confirmed"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "api-fuzzer": {
+      "skill_path": "skills/api-fuzzer/SKILL.md",
+      "script_path": "neopay/scripts/fuzzer.py",
+      "category": "api_testing",
+      "bot_owner": "HUNTER",
+      "confidence_required": 6,
+      "trigger_keywords": [
+        "API fuzz",
+        "REST fuzz",
+        "endpoint discovery",
+        "parameter fuzz",
+        "ffuf",
+        "nuclei",
+        "OpenAPI",
+        "Swagger",
+        "rate limit bypass"
+      ],
+      "primary_tools": [
+        "fuzzer.py",
+        "ffuf",
+        "nuclei",
+        "curl"
+      ],
+      "outputs": [
+        "endpoints_discovered",
+        "parameters_fuzzed",
+        "anomalous_responses"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "business-logic-auditor": {
+      "skill_path": "skills/business-logic-auditor/SKILL.md",
+      "category": "payment_logic",
+      "bot_owner": "HUNTER",
+      "confidence_required": 7,
+      "trigger_keywords": [
+        "business logic",
+        "race condition",
+        "negative amount",
+        "refund abuse",
+        "coupon bypass",
+        "price manipulation",
+        "double spend",
+        "replay attack"
+      ],
+      "primary_tools": [
+        "curl",
+        "python3",
+        "replay_engine.py"
+      ],
+      "outputs": [
+        "logic_flaw_identified",
+        "exploit_scenario",
+        "impact_assessment"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "payment-scanner": {
+      "skill_path": "skills/payment-scanner/SKILL.md",
+      "script_path": "neopay/scripts/fingerprinter.py",
+      "category": "surface_scanning",
+      "bot_owner": "OPERATIONS",
+      "confidence_required": 5,
+      "trigger_keywords": [
+        "payment scanner",
+        "gateway scan",
+        "port scan",
+        "ISO8583 port",
+        "HSM port",
+        "POS terminal",
+        "payment surface",
+        "fingerprint gateway"
+      ],
+      "primary_tools": [
+        "fingerprinter.py",
+        "nmap",
+        "masscan",
+        "nuclei"
+      ],
+      "outputs": [
+        "open_ports",
+        "protocol_identified",
+        "gateway_fingerprint",
+        "tech_stack"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "persistence-ops": {
+      "skill_path": "skills/persistence-ops/SKILL.md",
+      "category": "post_exploitation",
+      "bot_owner": "OPERATIONS",
+      "confidence_required": 8,
+      "trigger_keywords": [
+        "persistence",
+        "webhook backdoor",
+        "cron callback",
+        "admin account",
+        "beacon",
+        "C2",
+        "exfil",
+        "maintain access"
+      ],
+      "primary_tools": [
+        "curl",
+        "crontab",
+        "python3"
+      ],
+      "outputs": [
+        "persistence_established",
+        "callback_url",
+        "access_verified"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "stored-value-auditor": {
+      "skill_path": "skills/stored-value-auditor/SKILL.md",
+      "category": "payment_audit",
+      "bot_owner": "OPERATIONS",
+      "confidence_required": 6,
+      "trigger_keywords": [
+        "stored value",
+        "gift card",
+        "prepaid",
+        "loyalty points",
+        "balance manipulation",
+        "card reload",
+        "SVA"
+      ],
+      "primary_tools": [
+        "curl",
+        "python3"
+      ],
+      "outputs": [
+        "balance_endpoint",
+        "manipulation_vector",
+        "impact_assessment"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "red-team-recon": {
+      "skill_path": "skills/red-team-recon/SKILL.md",
+      "category": "reconnaissance",
+      "bot_owner": "RECON",
+      "confidence_required": 4,
+      "trigger_keywords": [
+        "recon",
+        "OSINT",
+        "subdomain",
+        "theHarvester",
+        "Shodan",
+        "Censys",
+        "certificate transparency",
+        "DNS",
+        "whois",
+        "ASN",
+        "email harvest"
+      ],
+      "primary_tools": [
+        "theHarvester",
+        "nmap",
+        "amass",
+        "katana",
+        "cert_spider.py"
+      ],
+      "outputs": [
+        "subdomains",
+        "emails",
+        "hosts",
+        "open_ports",
+        "tech_stack"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "cve-tracker": {
+      "skill_path": "skills/cve-tracker/SKILL.md",
+      "script_path": "knowledge_updater/scrapers/cve_spider.py",
+      "category": "threat_intelligence",
+      "bot_owner": "INTEL",
+      "confidence_required": 3,
+      "trigger_keywords": [
+        "CVE",
+        "vulnerability",
+        "NVD",
+        "CISA KEV",
+        "exploit",
+        "patch",
+        "zero-day",
+        "PoC"
+      ],
+      "primary_tools": [
+        "cve_spider.py",
+        "curl"
+      ],
+      "outputs": [
+        "cve_list",
+        "severity_scores",
+        "affected_products",
+        "exploit_availability"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "threat-intel": {
+      "skill_path": "skills/threat-intel/SKILL.md",
+      "script_path": "knowledge_updater/scrapers/darkweb_spider.py",
+      "category": "threat_intelligence",
+      "bot_owner": "INTEL",
+      "confidence_required": 3,
+      "trigger_keywords": [
+        "threat intel",
+        "dark web",
+        "breach",
+        "HIBP",
+        "paste site",
+        "credential leak",
+        "threat actor",
+        "IOC"
+      ],
+      "primary_tools": [
+        "darkweb_spider.py",
+        "curl"
+      ],
+      "outputs": [
+        "breach_data",
+        "threat_mentions",
+        "ioc_list",
+        "credential_leaks"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "campaign-manager": {
+      "skill_path": "skills/campaign-manager/SKILL.md",
+      "category": "engagement_management",
+      "bot_owner": "INTEL",
+      "confidence_required": 2,
+      "trigger_keywords": [
+        "campaign",
+        "engagement",
+        "start campaign",
+        "end campaign",
+        "session log",
+        "phase",
+        "status report",
+        "archive"
+      ],
+      "primary_tools": [
+        "python3",
+        "git"
+      ],
+      "outputs": [
+        "campaign_log",
+        "session_summary",
+        "phase_status",
+        "weekly_report"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "evidence-chain": {
+      "skill_path": "skills/evidence-chain/SKILL.md",
+      "category": "evidence_management",
+      "bot_owner": "INTEL",
+      "confidence_required": 2,
+      "trigger_keywords": [
+        "evidence",
+        "chain of custody",
+        "SHA256",
+        "hash",
+        "log finding",
+        "evidence category",
+        "forensic"
+      ],
+      "primary_tools": [
+        "python3",
+        "sha256sum"
+      ],
+      "outputs": [
+        "evidence_id",
+        "hash_verified",
+        "evidence_manifest"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "cost-governor": {
+      "skill_path": "skills/cost-governor/SKILL.md",
+      "category": "operational_management",
+      "bot_owner": "OPERATIONS",
+      "confidence_required": 1,
+      "trigger_keywords": [
+        "budget",
+        "API spend",
+        "cost",
+        "credits",
+        "rate limit",
+        "token usage",
+        "billing"
+      ],
+      "primary_tools": [
+        "python3"
+      ],
+      "outputs": [
+        "spend_report",
+        "budget_remaining",
+        "alert_threshold"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "telegram-alert": {
+      "skill_path": "skills/telegram-alert/SKILL.md",
+      "category": "c2_communications",
+      "bot_owner": "ALL",
+      "confidence_required": 1,
+      "trigger_keywords": [
+        "alert",
+        "notify",
+        "Telegram",
+        "heartbeat",
+        "escalate",
+        "status update",
+        "finding"
+      ],
+      "primary_tools": [
+        "python3",
+        "requests"
+      ],
+      "outputs": [
+        "message_sent",
+        "queue_status",
+        "delivery_confirmed"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "ollama-connector": {
+      "skill_path": "skills/ollama-connector/SKILL.md",
+      "category": "ai_inference",
+      "bot_owner": "ALL",
+      "confidence_required": 1,
+      "trigger_keywords": [
+        "Ollama",
+        "local LLM",
+        "inference",
+        "model",
+        "deepseek",
+        "prompt",
+        "generate"
+      ],
+      "primary_tools": [
+        "ollama",
+        "python3",
+        "requests"
+      ],
+      "outputs": [
+        "inference_result",
+        "model_response",
+        "token_count"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "pipeline-runner": {
+      "skill_path": "skills/pipeline-runner/SKILL.md",
+      "script_path": "pipeline/master_pipeline.py",
+      "category": "pipeline_execution",
+      "bot_owner": "OPERATIONS",
+      "confidence_required": 5,
+      "trigger_keywords": [
+        "run pipeline",
+        "start engagement",
+        "execute stages",
+        "pipeline",
+        "full scan",
+        "10-stage"
+      ],
+      "primary_tools": [
+        "master_pipeline.py",
+        "python3"
+      ],
+      "outputs": [
+        "stage_results",
+        "engagement_report",
+        "pipeline_status"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "bot-fleet": {
+      "skill_path": "skills/bot-fleet/SKILL.md",
+      "category": "fleet_management",
+      "bot_owner": "OPERATIONS",
+      "confidence_required": 2,
+      "trigger_keywords": [
+        "bot fleet",
+        "fleet status",
+        "RECON bot",
+        "INTEL bot",
+        "HUNTER bot",
+        "OPERATIONS bot",
+        "queue",
+        "bot health"
+      ],
+      "primary_tools": [
+        "python3",
+        "bot_monitor.py"
+      ],
+      "outputs": [
+        "fleet_status",
+        "queue_depths",
+        "bot_health_report"
+      ],
+      "status": "OPERATIONAL"
+    },
+    "iso20022-converter": {
+      "skill_path": "neopay/SKILL.md",
+      "script_path": "neopay/scripts/iso20022_converter.py",
+      "category": "payment_protocol",
+      "bot_owner": "OPERATIONS",
+      "confidence_required": 7,
+      "trigger_keywords": [
+        "ISO20022",
+        "SWIFT",
+        "MT103",
+        "MX",
+        "pacs.008",
+        "camt.053",
+        "clearing"
+      ],
+      "status": "active",
+      "version": "1.0",
+      "added": "2026-05-27"
+    },
+    "qr-payments-connector": {
+      "skill_path": "neopay/SKILL.md",
+      "script_path": "neopay/scripts/qr_payments_connector.py",
+      "category": "payment_protocol",
+      "bot_owner": "HUNTER",
+      "confidence_required": 6,
+      "trigger_keywords": [
+        "QR code",
+        "EMV QR",
+        "MPM",
+        "CPM",
+        "Alipay",
+        "WeChat Pay",
+        "QR payment"
+      ],
+      "status": "active",
+      "version": "1.0",
+      "added": "2026-05-27"
+    },
+    "clearing-settlement": {
+      "skill_path": "neopay/SKILL.md",
+      "script_path": "neopay/scripts/clearing_settlement.py",
+      "category": "payment_protocol",
+      "bot_owner": "OPERATIONS",
+      "confidence_required": 8,
+      "trigger_keywords": [
+        "clearing",
+        "settlement",
+        "CTF",
+        "IPM",
+        "Visa Base II",
+        "Mastercard IPM",
+        "batch"
+      ],
+      "status": "active",
+      "version": "1.0",
+      "added": "2026-05-27"
+    },
+    "spdh-client": {
+      "skill_path": "neopay/SKILL.md",
+      "script_path": "neopay/scripts/spdh_client.py",
+      "category": "terminal_protocol",
+      "bot_owner": "HUNTER",
+      "confidence_required": 8,
+      "trigger_keywords": [
+        "SPDH",
+        "HPDH",
+        "POS terminal",
+        "Verifone",
+        "Ingenico",
+        "terminal protocol"
+      ],
+      "status": "active",
+      "version": "1.0",
+      "added": "2026-05-27"
+    },
+    "evasion-stage6": {
+      "skill_path": "pipeline/stages/stage6_evasion.py",
+      "script_path": "pipeline/stages/stage6_evasion.py",
+      "category": "evasion",
+      "bot_owner": "ALL",
+      "confidence_required": 5,
+      "trigger_keywords": [
+        "evasion",
+        "WAF bypass",
+        "proxy rotation",
+        "user-agent",
+        "TLS fingerprint",
+        "rate limit"
+      ],
+      "status": "active",
+      "version": "2.1",
+      "added": "2026-05-27"
+    },
+    "distributed-stage7": {
+      "skill_path": "pipeline/stages/stage7_distributed.py",
+      "script_path": "pipeline/stages/stage7_distributed.py",
+      "category": "infrastructure",
+      "bot_owner": "ALL",
+      "confidence_required": 6,
+      "trigger_keywords": [
+        "distributed",
+        "scaling",
+        "Redis",
+        "Celery",
+        "Tailscale",
+        "multi-node",
+        "fleet"
+      ],
+      "status": "active",
+      "version": "2.1",
+      "added": "2026-05-27"
+    }
+  },
+  "pattern_index": {
+    "payment_protocol": [
+      "iso8583-operator",
+      "api-fuzzer",
+      "business-logic-auditor"
+    ],
+    "cryptographic_operations": [
+      "hsm-operator"
+    ],
+    "fraud_evasion": [
+      "fraud-bypass"
+    ],
+    "payment_security": [
+      "token-vault",
+      "payment-scanner",
+      "stored-value-auditor"
+    ],
+    "web_exploitation": [
+      "web-inject",
+      "api-fuzzer"
+    ],
+    "post_exploitation": [
+      "persistence-ops"
+    ],
+    "reconnaissance": [
+      "red-team-recon",
+      "payment-scanner"
+    ],
+    "threat_intelligence": [
+      "cve-tracker",
+      "threat-intel"
+    ],
+    "engagement_management": [
+      "campaign-manager",
+      "evidence-chain"
+    ],
+    "operational_management": [
+      "cost-governor",
+      "bot-fleet",
+      "pipeline-runner"
+    ],
+    "c2_communications": [
+      "telegram-alert"
+    ],
+    "ai_inference": [
+      "ollama-connector"
+    ]
+  },
+  "bot_skill_map": {
+    "RECON": [
+      "red-team-recon",
+      "payment-scanner",
+      "cve-tracker"
+    ],
+    "INTEL": [
+      "threat-intel",
+      "campaign-manager",
+      "evidence-chain",
+      "cost-governor"
+    ],
+    "HUNTER": [
+      "iso8583-operator",
+      "hsm-operator",
+      "fraud-bypass",
+      "token-vault",
+      "web-inject",
+      "api-fuzzer",
+      "business-logic-auditor"
+    ],
+    "OPERATIONS": [
+      "persistence-ops",
+      "stored-value-auditor",
+      "pipeline-runner",
+      "bot-fleet",
+      "telegram-alert",
+      "ollama-connector"
+    ]
+  },
+  "self_improvement": {
+    "feedback_source": "knowledge/bot_queue/ops_complete.json",
+    "update_script": "pipeline/agent/capability_updater.py",
+    "update_interval_hours": 24,
+    "last_self_update": null
+  },
+  "total_capabilities": 26,
+  "skills": {
+    "iso8583-operator": "skills/iso8583-operator/SKILL.md",
+    "hsm-operator": "skills/hsm-operator/SKILL.md",
+    "fraud-bypass": "skills/fraud-bypass/SKILL.md",
+    "token-vault": "skills/token-vault/SKILL.md",
+    "web-inject": "skills/web-inject/SKILL.md",
+    "api-fuzzer": "skills/api-fuzzer/SKILL.md",
+    "business-logic-auditor": "skills/business-logic-auditor/SKILL.md",
+    "payment-scanner": "skills/payment-scanner/SKILL.md",
+    "persistence-ops": "skills/persistence-ops/SKILL.md",
+    "stored-value-auditor": "skills/stored-value-auditor/SKILL.md",
+    "red-team-recon": "skills/red-team-recon/SKILL.md",
+    "cve-tracker": "skills/cve-tracker/SKILL.md",
+    "threat-intel": "skills/threat-intel/SKILL.md",
+    "campaign-manager": "skills/campaign-manager/SKILL.md",
+    "evidence-chain": "skills/evidence-chain/SKILL.md",
+    "cost-governor": "skills/cost-governor/SKILL.md",
+    "telegram-alert": "skills/telegram-alert/SKILL.md",
+    "ollama-connector": "skills/ollama-connector/SKILL.md",
+    "pipeline-runner": "skills/pipeline-runner/SKILL.md",
+    "bot-fleet": "skills/bot-fleet/SKILL.md",
+    "iso20022-converter": "neopay/SKILL.md",
+    "qr-payments-connector": "neopay/SKILL.md",
+    "clearing-settlement": "neopay/SKILL.md",
+    "spdh-client": "neopay/SKILL.md",
+    "evasion-stage6": "pipeline/stages/stage6_evasion.py",
+    "distributed-stage7": "pipeline/stages/stage7_distributed.py"
+  }
 }

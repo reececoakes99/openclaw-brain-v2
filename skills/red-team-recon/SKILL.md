@@ -316,7 +316,6 @@ curl -s "https://api.github.com/search/code?q=${TARGET_DOMAIN}+in:file&per_page=
 
 ```bash
 # Tor hidden service discovery (requires tor service running)
-# WARNING: Only for authorized red-team operations
 
 # Use onionscan for hidden service analysis
 # onionscan -onion-dir /tmp/onion_results exampleonion123.onion

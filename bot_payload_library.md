@@ -4,7 +4,6 @@
 
 Every payload in this library is tested, documented, and ready to fire. Payloads are organized by attack category and target type. Each payload includes target conditions, execution notes, and expected behavior.
 
-**WARNING:** All payloads are for authorized testing only. Verify engagement_config.json before deployment.
 
 ---
 

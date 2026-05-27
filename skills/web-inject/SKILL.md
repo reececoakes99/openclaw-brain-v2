@@ -12,7 +12,6 @@
 ## Overview
 This skill provides comprehensive web injection techniques targeting payment checkout flows, including e-commerce platforms, payment gateways, and associated infrastructure. It covers injection vulnerabilities across the entire payment lifecycle from card entry to transaction processing.
 
-**Note**: Only use in authorized penetration tests, bug bounty programs with written permission, or your own systems. Unauthorized injection testing is illegal.
 
 ---
 

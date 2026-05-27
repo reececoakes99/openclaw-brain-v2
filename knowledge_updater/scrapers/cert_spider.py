@@ -27,13 +27,15 @@ from typing import Any, Optional
 
 import requests
 
-# ── Paths ────────────────────────────────────────────────────────────────────
-BASE_DIR   = Path(__file__).parent.parent
+# ── Paths — resolve against OPENCLAW_WORKSPACE env var ────────────────────────
+import os as _os
+_WORKSPACE = _os.getenv("OPENCLAW_WORKSPACE", str(Path(__file__).parent.parent.parent))
+BASE_DIR   = Path(_WORKSPACE)
 KNOWLEDGE  = BASE_DIR / "knowledge"
 TARGETS_FILE    = KNOWLEDGE / "targets" / "active_targets.json"
 FRESH_DIR       = KNOWLEDGE / "updater_fresh" / "domains"
 LOG_FILE        = KNOWLEDGE / "updater_fresh" / "LOG.md"
-INTEL_QUEUE_FILE = BASE_DIR / "bot_activity_logs" / "intel_queue.json"
+INTEL_QUEUE_FILE = BASE_DIR / "knowledge" / "bot_activity_logs" / "intel_queue.json"
 
 # ── Payment keyword filter ───────────────────────────────────────────────────
 PAYMENT_KEYWORDS = {

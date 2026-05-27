@@ -14,12 +14,13 @@ import urllib.error
 from datetime import datetime, timedelta
 import ssl
 
-# Paths
-KBASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/..'
-TRACKER = f"{KBASE}/knowledge/cve_tracker/tracker.json"
-QUEUE = f"{KBASE}/knowledge/bot_queue/recon_pending.json"
-LOG = f"{KBASE}/knowledge/bot_activity_logs/LOG.md"
-FRESHPATH = f"{KBASE}/knowledge/updater_fresh/cves"
+# Paths — resolve against OPENCLAW_WORKSPACE env var with fallback to repo root
+_SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+KBASE = os.getenv('OPENCLAW_WORKSPACE', os.path.join(_SCRIPT_DIR, '..'))
+TRACKER = os.path.join(KBASE, 'knowledge', 'cve_tracker', 'tracker.json')
+QUEUE = os.path.join(KBASE, 'knowledge', 'bot_queue', 'recon_pending.json')
+LOG = os.path.join(KBASE, 'knowledge', 'bot_activity_logs', 'LOG.md')
+FRESHPATH = os.path.join(KBASE, 'knowledge', 'updater_fresh', 'cves')
 
 # Ensure fresh data dir
 os.makedirs(FRESHPATH, exist_ok=True)

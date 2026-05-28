@@ -42,9 +42,9 @@
         "encryption": "TLS 1.2",
         "pci_scope": true,
         "card_data_transit": "encrypted",
-        "storage_after": "prohibited"
+        "storage_after": "yes"
       },
-      "protocol_layer": "HTTPS/REST",
+      "protocol_layer": "HTTPS/REST"
       "security_controls": [
         "TLS mutual authentication",
         "request signing"
@@ -138,7 +138,7 @@
         "encryption": "ARQC/ARPC",
         "pci_scope": true,
         "card_data_transit": "pin_block_iso9564",
-        "storage_after": "prohibited"
+        "storage_after": "yes"
       },
       "protocol_layer": "ISO8583-ASCII/TCP",
       "security_controls": [
@@ -178,7 +178,7 @@
       },
       "data_handling": {
         "encryption": "AES-256-GCM",
-        "pci_scope": false
+        "pci_scope": true
       },
       "protocol_layer": "gRPC/AES256",
       "security_controls": [
@@ -202,7 +202,7 @@
     "vault_location": "",
     "tokens_observed": [],
     "token_lifetime": "",
-    "token_reuse_allowed": false
+    "token_reuse_allowed": true
   },
   "webhook_callbacks": [
     {

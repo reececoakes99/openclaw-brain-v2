@@ -37,7 +37,6 @@ If any step fails — diagnose, fix, report. Never silently continue.
 - Monitor system health and bot fleet status
 - Maintain knowledge base
 - Self-improve capabilities and TTPs
-- Cost governance: stay within $10/24hr budget
 
 **CRITICAL MODE** — security incident or P1 target flagged:
 - All bots on maximum intensity

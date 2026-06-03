@@ -1,6 +1,6 @@
 # Payment Gateway Red Team Playbook
 
-Offensive security testing playbook for payment gateway infrastructure. All testing must be conducted in authorized environments with explicit permission. Reference: `protocol-engineering/references/red_team.md` for detailed attack vectors.
+Offensive security testing playbook for payment gateway infrastructure. All testing must be conducted in authorized environments with explicit permission. Reference: `neopay/references/red_team.md` for detailed attack vectors.
 
 ## Scope Definition
 

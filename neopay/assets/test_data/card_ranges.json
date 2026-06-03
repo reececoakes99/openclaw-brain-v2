@@ -1,6 +1,3 @@
-# Card Range Definitions for Payment System Testing
-# Covers all major card networks with regex patterns, IINs, and metadata
-
 {
   "card_ranges": [
     {

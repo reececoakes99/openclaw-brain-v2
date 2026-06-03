@@ -45,7 +45,7 @@ All notable changes to the brain are documented here.
 - 20 specialized skills
 - knowledge_updater system (cert_spider, cve_spider, darkweb_spider)
 - memory/ operational state system
-- protocol-engineering/ scripts and references
+- neopay/ scripts and references
 
 ## [2.2.0] — 2026-05-27 — Production Build
 
@@ -63,7 +63,7 @@ All notable changes to the brain are documented here.
 
 ### Changed
 - `pipeline/agent/capability_registry.json` — Populated with 26 capabilities (was empty)
-- `protocol-engineering/scripts/` — Consolidated as symlink to `neopay/scripts/` (eliminated 15 duplicate files)
+- `neopay/scripts/` — Consolidated as symlink to `neopay/scripts/` (eliminated 15 duplicate files)
 - `openclaw_bootstrap.sh` — Expanded from 404 to 702 lines with full offensive toolchain
 - `neopay/SKILL.md` — Expanded with ISO20022, QR, clearing attack surfaces and surgical fleet integration map
 - `skills/payment-scanner/SKILL.md` — Expanded with JS SDK fingerprinting, network fingerprinting, ISO8583 detection

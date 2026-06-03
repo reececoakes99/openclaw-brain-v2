@@ -44,7 +44,7 @@
         "card_data_transit": "encrypted",
         "storage_after": "yes"
       },
-      "protocol_layer": "HTTPS/REST"
+      "protocol_layer": "HTTPS/REST",
       "security_controls": [
         "TLS mutual authentication",
         "request signing"

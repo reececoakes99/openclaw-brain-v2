@@ -20,7 +20,7 @@ maintainers:
   - name: Neopay Platform Team
     email: platform@neopay.io
 sources:
-  - https://github.com/neopay/protocol-engineering
+  - https://github.com/neopay/neopay
 icon: https://neopay.io/assets/images/logo.png
 annotations:
   category: Finance

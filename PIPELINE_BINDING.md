@@ -125,7 +125,7 @@ Pipeline stages that invoke neopay tools:
 
 For HUNTER bot operations (not pipeline-native):
 - HUNTER loads neopay commands directly from `NEOPAY_COMMANDS.md`
-- Executes scripts from `neopay/scripts/` and `protocol-engineering/scripts/`
+- Executes scripts from `neopay/scripts/` and `neopay/scripts/`
 - Results processed via `NEOPAY_FEEDBACK.md` protocol
 
 ---

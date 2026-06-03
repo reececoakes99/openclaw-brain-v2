@@ -139,7 +139,7 @@ Prometheus metrics:
 
 ## Red Team
 
-For offensive security testing, see the `protocol-engineering` skill
+For offensive security testing, see the `neopay` skill
 for: ISO8583 fuzzing, HSM attack surface, MITM proxy setup, crypto
 downgrade testing, red team configuration.
 

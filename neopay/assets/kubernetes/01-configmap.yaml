@@ -18,7 +18,7 @@ data:
   application.yml: |
     spring:
       application:
-        name: neopay-protocol-engineering
+        name: neopay-neopay
       profiles:
         active: ${SPRING_PROFILES_ACTIVE:production,kafka}
       datasource:

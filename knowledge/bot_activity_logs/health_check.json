@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "timestamp": null,
+  "recon": {
+    "status": "idle",
+    "last_run": null,
+    "last_error": null
+  },
+  "intel": {
+    "status": "idle",
+    "last_run": null,
+    "last_error": null
+  },
+  "hunter": {
+    "status": "idle",
+    "last_run": null,
+    "last_error": null
+  },
+  "operations": {
+    "status": "standby",
+    "last_run": null,
+    "last_error": null
+  },
+  "gateway": {
+    "status": "idle",
+    "last_run": null,
+    "last_error": null
+  }
+}

@@ -113,7 +113,7 @@ Send Telegram alert at:
 | Operation Type | Cost | Source |
 |---|---|---|
 | All neopay/scripts/*.py execution | $0.00 | Local Python execution |
-| protocol-engineering/scripts/*.py | $0.00 | Local Python execution |
+| neopay/scripts/*.py | $0.00 | Local Python execution |
 | Traffic capture (tcpdump, mitmproxy) | $0.00 | Local tools |
 | ISO8583 fuzzing, parsing, generation | $0.00 | Local scripts |
 | HSM simulation and testing | $0.00 | Local simulator |

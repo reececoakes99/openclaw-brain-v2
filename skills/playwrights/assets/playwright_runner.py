@@ -143,8 +143,8 @@ class NetworkTracer:
         patterns = [
             (r"Bearer\s+[\w\-]+\.[\w\-]+\.[\w\-]+", "Bearer JWT"),
             (r'(?:access_token|refresh_token|auth_token)["\']?\s*[:=]\s*["\']?([\w\-]{20,})', "Token Field"),
-            (r"session_id["\']?\s*[:=]\s*[\"']?([\w\-]{10,})", "Session ID"),
-            (r"api[_\-]?key["\']?\s*[:=]\s*[\"']?([\w\-]{16,})", "API Key"),
+            (r'session_id["\']?\s*[:=]\s*["\']?([\w\-]{10,})', "Session ID"),
+            (r'api[_\-]?key["\']?\s*[:=]\s*["\']?([\w\-]{16,})', "API Key"),
         ]
         for req in self.requests:
             content = req["url"] + str(req.get("post_data") or "")

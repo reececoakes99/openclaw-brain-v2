@@ -1,0 +1,24 @@
+[Unit]
+Description=OpenClaw Telegram bot queue gateway
+Documentation=file:/opt/openclaw-brain-v2/BOTS.md
+After=network-online.target openclaw-brain.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/openclaw-brain-v2
+EnvironmentFile=-/opt/openclaw-brain-v2/.env
+Environment=OPENCLAW_ROOT=/opt/openclaw-brain-v2
+Environment=BOT_GATEWAY_POLL_INTERVAL_SECONDS=5
+ExecStart=/usr/bin/python3 /opt/openclaw-brain-v2/knowledge_updater/schedulers/telegram_gateway.py
+Restart=always
+RestartSec=10
+User=openclaw
+Group=openclaw
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/opt/openclaw-brain-v2/knowledge /opt/openclaw-brain-v2/knowledge_updater /opt/openclaw-brain-v2/reports /opt/openclaw-brain-v2/.openclaw
+
+[Install]
+WantedBy=multi-user.target

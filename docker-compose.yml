@@ -1,0 +1,37 @@
+services:
+  openclaw-heartbeat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openclaw-brain-v2:latest
+    environment:
+      OPENCLAW_ROOT: /app
+      BOT_HEARTBEAT_INTERVAL_SECONDS: "300"
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      OPENCLAW_LOG_LEVEL: ${OPENCLAW_LOG_LEVEL:-INFO}
+    volumes:
+      - ./knowledge:/app/knowledge
+      - ./knowledge_updater:/app/knowledge_updater
+      - ./reports:/app/reports
+      - ./.openclaw:/app/.openclaw
+    command: ["python", "knowledge_updater/schedulers/heartbeat_loop.py"]
+    restart: unless-stopped
+
+  openclaw-bot-gateway:
+    image: openclaw-brain-v2:latest
+    depends_on:
+      - openclaw-heartbeat
+    environment:
+      OPENCLAW_ROOT: /app
+      BOT_GATEWAY_POLL_INTERVAL_SECONDS: "5"
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      OPENCLAW_LOG_LEVEL: ${OPENCLAW_LOG_LEVEL:-INFO}
+    volumes:
+      - ./knowledge:/app/knowledge
+      - ./knowledge_updater:/app/knowledge_updater
+      - ./reports:/app/reports
+      - ./.openclaw:/app/.openclaw
+    command: ["python", "knowledge_updater/schedulers/telegram_gateway.py"]
+    restart: unless-stopped

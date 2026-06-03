@@ -52,20 +52,20 @@ python3 neopay/scripts/fuzzer.py \
 ```bash
 python3 neopay/scripts/fingerprinter.py <host> <port>
 ```
-**Source:** `neopay/scripts/fingerprinter.py` (also `protocol-engineering/scripts/fingerprinter.py`)
+**Source:** `neopay/scripts/fingerprinter.py` (also `neopay/scripts/fingerprinter.py`)
 **Use:** Identify payment gateway vendor, ISO8583 dialect, protocol version
 **Output:** Gateway fingerprint (vendor, version, dialect, supported MTIs)
 **Chain:** First step in any ISO8583 engagement → feeds into all subsequent commands
 
 ### Replay Engine
 ```bash
-python3 protocol-engineering/scripts/replay_engine.py \
+python3 neopay/scripts/replay_engine.py \
   --pcap /path/to/capture.pcap \
   --target <host>:<port> \
   --modify-field <DE_number>=<new_value> \
   --delay-ms 100
 ```
-**Source:** `protocol-engineering/scripts/replay_engine.py`
+**Source:** `neopay/scripts/replay_engine.py`
 **Use:** Replay captured transactions with modifications for testing
 **Chain:** After PCAP capture → modify critical fields (amount, PAN, MAC) → resend
 
@@ -101,7 +101,7 @@ python3 neopay/scripts/mac_generator.py \
   --field 64|128 \
   --output /path/to/mac_message.bin
 ```
-**Source:** `neopay/scripts/mac_generator.py` (also `protocol-engineering/scripts/mac_generator.py`)
+**Source:** `neopay/scripts/mac_generator.py` (also `neopay/scripts/mac_generator.py`)
 **Use:** Insert generated MAC into crafted ISO8583 message
 
 ### PIN Block Generation
@@ -112,7 +112,7 @@ python3 neopay/scripts/pin_block.py \
   --pan <card_number> \
   --format 0|1|2|3|4
 ```
-**Source:** `neopay/scripts/pin_block.py` (also `protocol-engineering/scripts/pin_block.py`)
+**Source:** `neopay/scripts/pin_block.py` (also `neopay/scripts/pin_block.py`)
 **Use:** Generate PIN blocks in ISO9564 formats for testing
 **Output:** Hex-encoded PIN block
 
@@ -158,7 +158,7 @@ python3 neopay/scripts/crypto_downgrade.py \
   --test tls_version|cipher_suite|mac_algorithm|pin_format \
   --log /tmp/downgrade_results.json
 ```
-**Source:** `neopay/scripts/crypto_downgrade.py` (also `protocol-engineering/scripts/crypto_downgrade.py`)
+**Source:** `neopay/scripts/crypto_downgrade.py` (also `neopay/scripts/crypto_downgrade.py`)
 **Use:** Test if gateway accepts weaker cryptographic configurations
 **Output:** Accepted downgrades, minimum security levels enforced
 
@@ -168,7 +168,7 @@ python3 neopay/scripts/crypto_downgrade.py \
 
 ### SPDH Protocol Testing
 ```bash
-python3 protocol-engineering/scripts/fuzzer.py \
+python3 neopay/scripts/fuzzer.py \
   --protocol spdh \
   --target <terminal_host>:<port> \
   --command MULTICALL|KEYDL|STATUS \
@@ -178,7 +178,7 @@ python3 protocol-engineering/scripts/fuzzer.py \
 
 ### XFlow Remote Commands
 ```bash
-python3 protocol-engineering/scripts/fuzzer.py \
+python3 neopay/scripts/fuzzer.py \
   --protocol xflow \
   --target <terminal_host>:<port> \
   --command <xflow_command> \
@@ -194,7 +194,7 @@ python3 neopay/scripts/transaction_flow.py \
   --duration 60 \
   --output /tmp/flow_analysis.json
 ```
-**Source:** `neopay/scripts/transaction_flow.py` (also `protocol-engineering/scripts/transaction_flow.py`)
+**Source:** `neopay/scripts/transaction_flow.py` (also `neopay/scripts/transaction_flow.py`)
 **Use:** Map complete transaction lifecycle (auth → capture → settle)
 
 ---
@@ -203,25 +203,25 @@ python3 neopay/scripts/transaction_flow.py \
 
 ### MITM Proxy
 ```bash
-python3 protocol-engineering/scripts/mitm_proxy.py \
+python3 neopay/scripts/mitm_proxy.py \
   --listen <local_port> \
   --target <remote_host>:<remote_port> \
   --log /tmp/mitm_capture.pcap \
   --modify-field <DE_number>=<value>
 ```
-**Source:** `protocol-engineering/scripts/mitm_proxy.py`
+**Source:** `neopay/scripts/mitm_proxy.py`
 **Use:** Intercept and modify payment traffic in transit
 **Chain:** Set up proxy → capture traffic → parse with parse_iso8583 → identify targets
 
 ### PCAP Analysis
 ```bash
-python3 protocol-engineering/scripts/pcap_tools.py \
+python3 neopay/scripts/pcap_tools.py \
   --input /path/to/capture.pcap \
   --filter iso8583|spdh|xflow \
   --extract-messages \
   --output /tmp/extracted_messages/
 ```
-**Source:** `protocol-engineering/scripts/pcap_tools.py`
+**Source:** `neopay/scripts/pcap_tools.py`
 **Use:** Extract payment protocol messages from packet captures
 
 ---
@@ -230,25 +230,25 @@ python3 protocol-engineering/scripts/pcap_tools.py \
 
 ### Load Tester
 ```bash
-python3 protocol-engineering/scripts/load_tester.py \
+python3 neopay/scripts/load_tester.py \
   --target <host>:<port> \
   --dialect hiso93|hiso87 \
   --tps <transactions_per_second> \
   --duration <seconds> \
   --report /tmp/load_report.json
 ```
-**Source:** `protocol-engineering/scripts/load_tester.py`
+**Source:** `neopay/scripts/load_tester.py`
 **Use:** Stress test payment gateway, identify failure thresholds
 
 ### Stress Tester
 ```bash
-python3 protocol-engineering/scripts/stress_tester.py \
+python3 neopay/scripts/stress_tester.py \
   --target <host>:<port> \
   --mode ramp|burst|sustained \
   --max-tps 1500 \
   --report /tmp/stress_report.json
 ```
-**Source:** `protocol-engineering/scripts/stress_tester.py`
+**Source:** `neopay/scripts/stress_tester.py`
 **Use:** Push gateway to breaking point, discover resource exhaustion vectors
 
 ---
@@ -257,12 +257,12 @@ python3 protocol-engineering/scripts/stress_tester.py \
 
 ### Echo Server (for testing)
 ```bash
-python3 protocol-engineering/scripts/echo_server.py \
+python3 neopay/scripts/echo_server.py \
   --port <port> \
   --dialect hiso93|hiso87 \
   --log /tmp/echo_log.json
 ```
-**Source:** `protocol-engineering/scripts/echo_server.py`
+**Source:** `neopay/scripts/echo_server.py`
 **Use:** Stand up local echo server to test message construction before live target
 
 ---
@@ -276,7 +276,7 @@ python3 neopay/scripts/bot_monitor.py \
   --bots recon,intel,hunter,ops \
   --output telegram|console|json
 ```
-**Source:** `neopay/scripts/bot_monitor.py` (also `protocol-engineering/scripts/bot_monitor.py`)
+**Source:** `neopay/scripts/bot_monitor.py` (also `neopay/scripts/bot_monitor.py`)
 **Use:** Check bot fleet health, queue depths, last cycle status
 
 ---

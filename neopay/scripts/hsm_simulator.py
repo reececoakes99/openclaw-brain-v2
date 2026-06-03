@@ -145,7 +145,7 @@ class HSMSimulator:
 
         # Decrypt stored PIN block
         decrypted = self._decrypt_3des(stored, zmk)
-        stored_pin = decrypted[:2] == b'\x04\x'
+        stored_pin = decrypted[:2] == b'\\x04\\x'
 
         # Build expected PIN block
         expected = self._build_pin_block_format0(pan, pin)

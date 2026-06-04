@@ -67,7 +67,7 @@ Input Key: TPK under LMK
 Output Key: TPK under LMK (or new key)
 
 HSM Request:
-  NC | TPK-under-LMK | input_pinblock | input_format | 
+  NC | TPK-under-LMK | input_pinblock | input_format |
       output_format | output_key | account_number
 
 HSM Response:

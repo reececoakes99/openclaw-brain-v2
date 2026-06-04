@@ -113,7 +113,7 @@ class OllamaConnector:
         self.model = model or os.environ.get('OLLAMA_MODEL', 'llama3.3:70b-instruct-q4_K_M')
         self.fallback_model = os.environ.get('OLLAMA_FALLBACK_MODEL', 'llama3.1:8b-instruct-q4_K_M')
         self.timeout = int(os.environ.get('OLLAMA_TIMEOUT', '120'))
-    
+
     def generate(
         self,
         prompt: str,
@@ -125,19 +125,19 @@ class OllamaConnector:
     ) -> str:
         """
         Generate completion via Ollama API
-        
+
         Args:
             prompt: User prompt
             system: System prompt (e.g., agent instructions)
             model: Override default model
             temperature: Creativity (0.1=precise, 1.0=creative)
             num_ctx: Context window size
-            
+
         Returns:
             Model response as string
         """
         target_model = model or self.model
-        
+
         payload = {
             "model": target_model,
             "prompt": prompt,
@@ -148,10 +148,10 @@ class OllamaConnector:
                 "stop": ["</s>", "\n\n---", "---END---"],
             }
         }
-        
+
         if system:
             payload["system"] = system
-        
+
         try:
             with httpx.Client(timeout=self.timeout) as client:
                 response = client.post(
@@ -160,7 +160,7 @@ class OllamaConnector:
                 )
                 response.raise_for_status()
                 return response.json().get('response', '')
-                
+
         except httpx.TimeoutException:
             # Try fallback model
             if target_model == self.model and self.fallback_model:
@@ -173,7 +173,7 @@ class OllamaConnector:
                     response.raise_for_status()
                     return response.json().get('response', '')
             raise
-        
+
         except httpx.HTTPError as e:
             raise ConnectionError(f"Ollama API error: {e}")
 
@@ -186,14 +186,14 @@ class OllamaConnector:
     ) -> str:
         """
         Chat completion (conversational format)
-        
+
         Args:
             messages: List of {"role": "user/assistant/system", "content": "..."}
             model: Override default model
             temperature: Response creativity
         """
         target_model = model or self.model
-        
+
         payload = {
             "model": target_model,
             "messages": messages,
@@ -202,7 +202,7 @@ class OllamaConnector:
                 "temperature": temperature,
             }
         }
-        
+
         try:
             with httpx.Client(timeout=self.timeout) as client:
                 response = client.post(
@@ -222,7 +222,7 @@ class OllamaConnector:
             "model": model,
             "prompt": text
         }
-        
+
         with httpx.Client(timeout=30) as client:
             response = client.post(
                 f"{self.base_url}/api/embeddings",
@@ -239,13 +239,13 @@ class OllamaConnector:
             with httpx.Client(timeout=5) as client:
                 # Check server
                 tags = client.get(f"{self.base_url}/api/tags").json()
-                
+
                 # Check specific model
                 model_info = client.post(
                     f"{self.base_url}/api/show",
                     json={"name": self.model}
                 ).json()
-                
+
                 return {
                     "status": "healthy",
                     "models": [m['name'] for m in tags.get('models', [])],
@@ -261,49 +261,49 @@ class OllamaConnector:
 def run_with_ollama(prompt: str, context_file: str = None) -> str:
     """
     Run a prompt through Ollama with OpenClaw brain context.
-    
+
     Usage:
-        result = run_with_ollama("Analyze this target for payment vulnerabilities", 
+        result = run_with_ollama("Analyze this target for payment vulnerabilities",
                                   context_file="knowledge/gateway_profiles/target/surface_scan.json")
     """
     ollama = OllamaConnector()
-    
+
     # Build system prompt from brain files
     system_parts = []
-    
+
     brain_files = [
         "SOUL.md",
         "AGENTS.md",
         "BOTS.md",
         "REASONING.md",
     ]
-    
+
     for bf in brain_files:
         path = os.path.join(os.path.dirname(__file__), "..", bf)
         if os.path.exists(path):
             system_parts.append(open(path).read())
-    
+
     system_prompt = "\n\n".join(system_parts)
-    
+
     # Append context file if provided
     if context_file:
         if os.path.exists(context_file):
             context_data = open(context_file).read()
             prompt = f"{prompt}\n\n## Context Data\n{context_data}"
-    
+
     return ollama.generate(prompt=prompt, system=system_prompt)
 
 
 if __name__ == '__main__':
     import sys
-    
+
     ollama = OllamaConnector()
-    
+
     # Health check
     print("=== Ollama Health Check ===")
     health = ollama.health_check()
     print(json.dumps(health, indent=2))
-    
+
     if health['status'] == 'healthy':
         print(f"\n=== Testing Generation ===")
         response = ollama.generate(

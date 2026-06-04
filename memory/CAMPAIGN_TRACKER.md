@@ -25,13 +25,13 @@ campaign:
     sector: "[SECTOR]"               # e.g., Payment Processor, Acquirer, Merchant
     type: "[TYPE]"                   # e.g., PSP, ISO, Merchant, Gateway
     priority: P[1-5]                # Target priority
-  
+
   timeline:
     start_date: "YYYY-MM-DD"
     projected_end: "YYYY-MM-DD"
     actual_end: null                # Set when campaign closes
     current_phase: "[PHASE]"        # reconnaissance, enumeration, exploitation, documentation
-  
+
   scope:
     targets:                         # Network/system scope
       - asset: "[IP/CIDR]"
@@ -43,7 +43,7 @@ campaign:
     exclusions:                      # Explicitly out of scope
       - asset: "[IP/CIDR]"
         reason: "[REASON]"
-  
+
   engagement:
     session_count: 0
     total_hours: 0
@@ -52,19 +52,19 @@ campaign:
     high_findings: 0
     medium_findings: 0
     low_findings: 0
-  
+
   team:
     lead: "[BOT_ID]"
     recon: "[BOT_ID]"
     hunter: "[BOT_ID]"
     intel: "[BOT_ID]"
     operations: "[BOT_ID]"
-  
+
   collateral:
     reports: []
     pocs: []
     exfiltrated_data: null          # Hash of exfiltrated data
-  
+
   status: ACTIVE                    # ACTIVE, ON_HOLD, COMPLETE, ABORTED
 ```
 
@@ -92,33 +92,33 @@ session:
   end_time: "HH:MM:SS"
   duration_minutes: 0
   bot: "[BOT_ID]"
-  
+
   objectives:
     - "[OBJECTIVE]"
-  
+
   actions_taken:
     - action: "[ACTION]"
       target: "[TARGET]"
       result: "[RESULT]"
       timestamp: "HH:MM:SS"
-  
+
   findings:
     - id: "FIND-XXX"
       title: "[TITLE]"
       severity: "[CRITICAL/HIGH/MEDIUM/LOW/INFO]"
       cvss: X.X
       description: "[DESCRIPTION]"
-  
+
   artifacts:
     - type: "[TYPE]"
       path: "[PATH]"
       hash: "[HASH]"
-  
+
   blockers: []
-  
+
   next_session_objectives:
     - "[OBJECTIVE]"
-  
+
   notes: "[OPERATIONAL NOTES]"
 ```
 

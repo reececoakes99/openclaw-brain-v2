@@ -94,7 +94,7 @@ def generate_report(host, port, output_file):
     report['hsm_tests'] = test_hsm_key_downgrade()
     print("  MAC downgrade...")
     report['mac_tests'] = test_mac_downgrade()
-    
+
     vulnerable = []
     if report['protocol_tests'].get('downgradable'):
         vulnerable.append({'severity': 'CRITICAL', 'type': 'Protocol Downgrade', 'detail': 'Server accepts weak TLS version'})
@@ -105,12 +105,12 @@ def generate_report(host, port, output_file):
         vulnerable.append({'severity': h['risk'], 'type': 'HSM Key Algorithm', 'detail': h['finding']})
     for m in report['mac_tests']:
         vulnerable.append({'severity': m['risk'], 'type': 'MAC Algorithm', 'detail': m['finding']})
-    
+
     report['vulnerabilities'] = vulnerable
-    report['summary'] = {'total_tests': 4 + len(report['cipher_tests']), 
+    report['summary'] = {'total_tests': 4 + len(report['cipher_tests']),
                          'vulnerabilities': len(vulnerable),
                          'risk_level': 'CRITICAL' if vulnerable else 'LOW'}
-    
+
     with open(output_file, 'w') as f:
         json.dump(report, f, indent=2)
     print(f"\n=== REPORT ===")

@@ -187,7 +187,7 @@ log_action() {
   local action="$2"
   local command="$3"
   local finding_ref="$4"
-  
+
   jq --arg ts "$(date -Iseconds)" \
      --arg action "$action" \
      --arg cmd "$command" \
@@ -213,7 +213,7 @@ end_session() {
   local duration_minutes="$2"
   local findings_count="$3"
   local next_phase="$4"
-  
+
   # Update session log
   jq --arg ended "$(date -Iseconds)" \
      --arg dur "$duration_minutes" \
@@ -221,7 +221,7 @@ end_session() {
      --arg next "$next_phase" \
      '.ended = $ended | .duration_minutes = ($dur | tonumber) | .findings_this_session = $finding_count | .next_planned_phase = $next' \
      "${CAMPAIGN_DIR}/sessions/${session_id}/session.json"
-  
+
   # Update campaign statistics
   jq --arg next_phase "$next_phase" \
      --arg dur "$duration_minutes" \
@@ -259,9 +259,9 @@ transition_phase() {
   local from_phase="$2"
   local to_phase="$3"
   local reason="$4"
-  
+
   CAMPAIGN_DIR="/root/.nanobot/workspace/openclaw-brain-v2/knowledge/gateway_profiles/${target}"
-  
+
   jq --arg ts "$(date -Iseconds)" \
      --arg from "$from_phase" \
      --arg to "$to_phase" \
@@ -275,7 +275,7 @@ transition_phase() {
      "${CAMPAIGN_DIR}/campaign_log.json" \
   > "${CAMPAIGN_DIR}/campaign_log.json.tmp" \
   && mv "${CAMPAIGN_DIR}/campaign_log.json.tmp" "${CAMPAIGN_DIR}/campaign_log.json"
-  
+
   echo "✅ Phase transition: ${from_phase} → ${to_phase} (${reason})"
 }
 ```
@@ -296,7 +296,7 @@ add_finding() {
   local description="$6"
   local evidence_path="$7"
   local cve_ids="$8"
-  
+
   CAMPAIGN_DIR="/root/.nanobot/workspace/openclaw-brain-v2/knowledge/gateway_profiles/${campaign}"
   FINDING_JSON=$(cat << EOFJ
 {
@@ -321,9 +321,9 @@ add_finding() {
 }
 EOFJ
 )
-  
+
   echo "${FINDING_JSON}" | jq . > "${CAMPAIGN_DIR}/findings/${finding_id}.json"
-  
+
   # Add evidence path if provided
   if [ -n "$evidence_path" ] && [ -f "$evidence_path" ]; then
     cp -r "$evidence_path" "${CAMPAIGN_DIR}/findings/${finding_id}/"
@@ -334,7 +334,7 @@ EOFJ
     && mv "${CAMPAIGN_DIR}/findings/${finding_id}.json.tmp" \
        "${CAMPAIGN_DIR}/findings/${finding_id}.json"
   fi
-  
+
   # Update campaign log
   jq --arg fid "$finding_id" \
      --arg sev "$severity" \
@@ -355,7 +355,7 @@ attach_screenshot() {
   local finding_id="$1"
   local screenshot_path="$2"
   local description="$3"
-  
+
   cp "$screenshot_path" "${CAMPAIGN_DIR}/screenshots/"
   jq --arg sp "$screenshot_path" \
      --arg desc "$description" \
@@ -378,7 +378,7 @@ attach_screenshot() {
 generate_weekly_report() {
   local target="$1"
   CAMPAIGN_DIR="/root/.nanobot/workspace/openclaw-brain-v2/knowledge/gateway_profiles/${target}"
-  
+
   STATS=$(jq '.statistics' "${CAMPAIGN_DIR}/campaign_log.json")
   PHASE=$(jq -r '.current_phase' "${CAMPAIGN_DIR}/campaign_log.json")
   SESSIONS=$(jq '.sessions | length' "${CAMPAIGN_DIR}/campaign_log.json")
@@ -386,7 +386,7 @@ generate_weekly_report() {
   P2=$(jq -r '.statistics.p2_findings' <<< "$STATS")
   P3=$(jq -r '.statistics.p3_findings' <<< "$STATS")
   HOURS=$(jq -r '.statistics.hours_invested' <<< "$STATS")
-  
+
   cat << EOF
 📊 WEEKLY CAMPAIGN REPORT — ${target}
 
@@ -438,29 +438,29 @@ curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" 
 check_escalation_triggers() {
   local target="$1"
   CAMPAIGN_DIR="/root/.nanobot/workspace/openclaw-brain-v2/knowledge/gateway_profiles/${target}"
-  
+
   LAST_ACTIVITY=$(jq -r '.last_activity' "${CAMPAIGN_DIR}/campaign_log.json")
   DAYS_SINCE=$((${DAYS_SINCE_LAST_ACTIVITY}))
-  
+
   # Target goes dark (>7 days no activity)
   if [ "$DAYS_SINCE" -gt 7 ]; then
     jq '.escalation_flags.target_dark = true' "${CAMPAIGN_DIR}/campaign_log.json" \
     > "${CAMPAIGN_DIR}/campaign_log.json.tmp" \
     && mv "${CAMPAIGN_DIR}/campaign_log.json.tmp" "${CAMPAIGN_DIR}/campaign_log.json"
-    
+
     send_telegram_alert "🟠 ESCALATION: Campaign ${target} has been inactive for ${DAYS_SINCE} days. Target may have gone dark or detected the engagement."
   fi
-  
+
   # Finding rate drop (>3 sessions with <1 new finding)
   RECENT_FINDINGS=$(jq '[.sessions[-3:][] | .findings_this_session] | add' "${CAMPAIGN_DIR}/campaign_log.json")
   if [ "$RECENT_FINDINGS" -eq 0 ]; then
     jq '.escalation_flags.finding_rate_drop = true' "${CAMPAIGN_DIR}/campaign_log.json" \
     > "${CAMPAIGN_DIR}/campaign_log.json.tmp" \
     && mv "${CAMPAIGN_DIR}/campaign_log.json.tmp" "${CAMPAIGN_DIR}/campaign_log.json"
-    
+
     send_telegram_alert "🟡 ESCALATION: Campaign ${target} finding rate has dropped significantly. Consider phase pivot or target re-evaluation."
   fi
-  
+
   # Countermeasure detected (logged by other skills)
   # Other skills call: jq '.escalation_flags.countermeasure_detected = true'
 }
@@ -476,10 +476,10 @@ check_escalation_triggers() {
 archive_campaign() {
   local target="$1"
   local archive_reason="$2"
-  
+
   CAMPAIGN_DIR="/root/.nanobot/workspace/openclaw-brain-v2/knowledge/gateway_profiles/${target}"
   ARCHIVE_DIR="/root/.nanobot/workspace/openclaw-brain-v2/knowledge/targets/archived/${target}"
-  
+
   # Finalize campaign log
   jq --arg arch_reason "$archive_reason" \
      --arg arch_date "$(date -Iseconds)" \
@@ -487,15 +487,15 @@ archive_campaign() {
      "${CAMPAIGN_DIR}/campaign_log.json" \
   > "${CAMPAIGN_DIR}/campaign_log.json.tmp" \
   && mv "${CAMPAIGN_DIR}/campaign_log.json.tmp" "${CAMPAIGN_DIR}/campaign_log.json"
-  
+
   # Move to archive
   mkdir -p "$(dirname "$ARCHIVE_DIR")"
   mv "${CAMPAIGN_DIR}" "${ARCHIVE_DIR}"
-  
+
   # Update CAMPAIGN_TRACKER
   sed -i "s/| 🟢 Active |/| 🔵 Archived |/" \
      /root/.nanobot/workspace/openclaw-brain-v2/memory/CAMPAIGN_TRACKER.md
-  
+
   echo "✅ Campaign ${target} archived to ${ARCHIVE_DIR}"
 }
 ```

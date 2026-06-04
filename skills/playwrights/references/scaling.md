@@ -55,7 +55,7 @@ class BrowserPool:
         self.browser_type = browser_type
         self.pool_size = pool_size
         self.tasks_per_browser = {}
-    
+
     def get_browser(self):
         for browser in self.browsers:
             if self.tasks_per_browser[browser] < MAX_TASKS_PER_BROWSER:
@@ -65,7 +65,7 @@ class BrowserPool:
         self.browsers.append(b)
         self.tasks_per_browser[b] = 0
         return b
-    
+
     def release(self, browser):
         self.tasks_per_browser[browser] += 1
         if self.tasks_per_browser[browser] >= MAX_TASKS_PER_BROWSER:
@@ -111,11 +111,11 @@ from locust import HttpUser, task, between
 
 class PlaywrightsUser(HttpUser):
     wait_time = between(0.5, 2)
-    
+
     @task
     def create_task(self):
         self.client.post("/tasks", json={"intent": "go to google.com", "browser": "chromium"})
-    
+
     @task(3)
     def get_result(self):
         task_id = self.environment.runner.task_ids[-1] if self.environment.runner.task_ids else "test-id"

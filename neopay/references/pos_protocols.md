@@ -47,7 +47,7 @@ SPDH (also known as HPDH base) is a message-based protocol used by Verifone, Ing
 ```
 Terminal → Host: Type 0300
   Data: [KeyType(1)] [EncryptedKeyData(8/16)]
-  
+
 Host → Terminal: Type 0320
   Data: [Status(1)] [MAC(4)]
 ```
@@ -171,19 +171,19 @@ Terminals are configured via **Script scripting** — configuration scripts sent
 ```
 SCRIPT TYPE 0x01 — Terminal Configuration
   Set parameter: parameter_id, value
-  
-SCRIPT TYPE 0x02 — Merchant Configuration  
+
+SCRIPT TYPE 0x02 — Merchant Configuration
   Set merchant name, address, ID
-  
+
 SCRIPT TYPE 0x03 — Key Loading
   Inject ZMK/TMK/WK via HSM-encrypted transport
-  
+
 SCRIPT TYPE 0x04 — Blacklist Update
   Update card blacklist / hotlist
-  
+
 SCRIPT TYPE 0x05 — Firmware Download
   Block-by-block firmware push
-  
+
 SCRIPT TYPE 0x06 — Application Load
   Push payment applet to terminal
 ```

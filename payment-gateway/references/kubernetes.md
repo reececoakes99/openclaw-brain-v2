@@ -103,7 +103,7 @@ spec:
                       operator: In
                       values: [message-engine]
                 topologyKey: kubernetes.io/hostname
-      
+
       containers:
         - name: message-engine
           image: neopay/message-engine:2.1.0
@@ -112,7 +112,7 @@ spec:
               name: http
             - containerPort: 9090
               name: grpc
-          
+
           resources:
             requests:
               cpu: "2"
@@ -121,10 +121,10 @@ spec:
               cpu: "4"
               memory: "8Gi"
               # Memory limit = request for guaranteed QoS
-          
+
           env:
             - name: JAVA_OPTS
-              value: "-Xms2g -Xmx4g -XX:+UseG1GC 
+              value: "-Xms2g -Xmx4g -XX:+UseG1GC
                       -XX:MaxGCPauseMillis=50
                       -Djava.security.egd=file:/dev/./urandom
                       -XX:+HeapDumpOnOutOfMemoryError"
@@ -145,7 +145,7 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: password
-          
+
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
@@ -153,7 +153,7 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 30
             failureThreshold: 3
-          
+
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -161,7 +161,7 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             failureThreshold: 3
-          
+
           lifecycle:
             preStop:
               exec:
@@ -195,16 +195,16 @@ spec:
       # Dedicated node pool (no other workloads)
       nodeSelector:
         workload-type: hsm
-      
+
       tolerations:
         - key: "dedicated"
           operator: "Equal"
           value: "hsmpool"
-      
+
       containers:
         - name: hsm-service
           image: neopay/hsm-service:1.3.0
-          
+
           resources:
             requests:
               cpu: "1"
@@ -213,7 +213,7 @@ spec:
               cpu: "2"
               memory: "4Gi"
               # No memory limit = guaranteed QoS for HSM ops
-          
+
           env:
             - name: HSM_TYPE
               value: "THALES_LUNA"
@@ -223,7 +223,7 @@ spec:
               value: "0"
             - name: VAULT_KEY_VERSION
               value: "3"
-          
+
           # No liveness probe (HSM must not be restarted)
           # Only readiness for load balancing
           readinessProbe:
@@ -231,12 +231,12 @@ spec:
               command: ["/app/check_hsm_connection.sh"]
             initialDelaySeconds: 30
             periodSeconds: 60
-          
+
           securityContext:
             runAsNonRoot: false
             runAsUser: 0
             # Runs as root to access HSM hardware
-          
+
           # Strict network policy (can only talk to HSM)
           # See network-policy.yaml
 ```
@@ -254,11 +254,11 @@ spec:
   podSelector:
     matchLabels:
       app: message-engine
-  
+
   policyTypes:
     - Ingress
     - Egress
-  
+
   ingress:
     - from:
         - namespaceSelector:
@@ -270,7 +270,7 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
-  
+
   egress:
     # Outbound: only to defined dependencies
     - to:
@@ -282,7 +282,7 @@ spec:
           port: 5672  # RabbitMQ
         - protocol: TCP
           port: 5432  # PostgreSQL
-    
+
     - to:
         - namespaceSelector:
             matchLabels:
@@ -290,7 +290,7 @@ spec:
       ports:
         - protocol: TCP
           port: 8443  # Vault service
-    
+
     - to:
         - namespaceSelector:
             matchLabels:
@@ -298,7 +298,7 @@ spec:
       ports:
         - protocol: TCP
           port: 9090  # Prometheus metrics
-    
+
     # Deny all other egress (including internet)
     - to:
         - namespaceSelector: {}
@@ -319,7 +319,7 @@ spec:
   selector:
     matchLabels:
       app: vault-service
-  
+
   template:
     spec:
       topologySpreadConstraints:
@@ -329,17 +329,17 @@ spec:
           labelSelector:
             matchLabels:
               app: vault-service
-      
+
       containers:
         - name: vault-service
           image: neopay/vault-service:3.0.0
-          
+
           env:
             - name: ENCRYPTION_KEY_SOURCE
               value: "HSM"
             - name: HSM_ENDPOINT
               value: "hsm-service:8443"
-          
+
           resources:
             requests:
               cpu: "1"
@@ -347,21 +347,21 @@ spec:
             limits:
               cpu: "2"
               memory: "4Gi"
-          
+
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
-          
+
           volumeMounts:
             - name: tmp
               mountPath: /tmp
             - name: vault-secrets
               mountPath: /var/lib/vault/secrets
               readOnly: true
-      
+
       volumes:
         - name: tmp
           emptyDir: {}
@@ -386,10 +386,10 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: message-engine
-  
+
   minReplicas: 6
   maxReplicas: 30
-  
+
   metrics:
     # Scale on RabbitMQ queue depth
     - type: Pods
@@ -406,7 +406,7 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
-  
+
   behavior:
     scaleDown:
       stabilizationWindowSeconds: 300  # 5 min cooldown
@@ -456,7 +456,7 @@ metadata:
 spec:
   minAvailable: "80%"  # At least 80% pods available during disruption
   # For payment processing, we want high availability
-  
+
 # For vault (less critical for availability, more critical for security)
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -485,7 +485,7 @@ spec:
     - port: http
       path: /actuator/prometheus
       interval: 15s
-  
+
   # Key metrics to alert on:
   # - authorization_latency_p99 (target: < 500ms)
   # - rabbitmq_queue_depth (alert if > 1000)

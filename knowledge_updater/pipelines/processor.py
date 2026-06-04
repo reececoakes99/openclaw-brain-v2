@@ -49,7 +49,7 @@ def enrich_cves(cves):
         # Add priority based on severity + CVSS
         score = cve.get('cvss_score', 0) or 0
         severity = cve.get('severity', 'LOW')
-        
+
         if score >= 9.0 or cve.get('priority') == 'P1':
             cve['derived_priority'] = 'P1'
             cve['action_required'] = True
@@ -59,10 +59,10 @@ def enrich_cves(cves):
         else:
             cve['derived_priority'] = 'P3'
             cve['action_required'] = False
-        
+
         # Add source attribution
         cve['enriched_at'] = datetime.utcnow().isoformat()
-    
+
     return cves
 
 def enrich_targets(targets):
@@ -72,91 +72,91 @@ def enrich_targets(targets):
         exposed_endpoints = len(target.get('endpoints', []))
         tech_count = len(target.get('technologies', []))
         ssl_issues = target.get('ssl_issues', 0)
-        
+
         risk_score = min(10, (exposed_endpoints * 0.3) + (tech_count * 0.5) + (ssl_issues * 1.0))
         target['risk_score'] = round(risk_score, 1)
-        
+
         if risk_score >= 7:
             target['priority'] = 'P1'
         elif risk_score >= 4:
             target['priority'] = 'P2'
         else:
             target['priority'] = 'P3'
-        
+
         target['enriched_at'] = datetime.utcnow().isoformat()
-    
+
     return targets
 
 def merge_cve_tracker(new_cves):
     """Merge new CVEs into main tracker"""
     tracker_path = f"{KBASE}/knowledge/cve_tracker/tracker.json"
     tracker = load_json(tracker_path) or {'cves': [], 'last_updated': None}
-    
+
     existing = tracker.get('cves', [])
     deduped = dedup_existing(existing, new_cves, 'cve_id')
-    
+
     # Sort by priority then score
     priority_order = {'P1': 0, 'P2': 1, 'P3': 2}
     deduped.sort(key=lambda x: (
         priority_order.get(x.get('derived_priority', 'P3'), 3),
         -(x.get('cvss_score', 0) or 0)
     ))
-    
+
     tracker['cves'] = deduped + existing
     tracker['last_updated'] = datetime.utcnow().isoformat()
     tracker['total_count'] = len(tracker['cves'])
     tracker['new_in_run'] = len(deduped)
-    
+
     with open(tracker_path, 'w') as f:
         json.dump(tracker, f, indent=2)
-    
+
     return len(deduped)
 
 def merge_targets(new_targets):
     """Merge new targets into active targets"""
     targets_path = f"{KBASE}/knowledge/targets/active_targets.json"
     targets = load_json(targets_path) or {'targets': [], 'last_updated': None}
-    
+
     existing = targets.get('targets', [])
     deduped = dedup_existing(existing, new_targets, 'domain')
-    
+
     targets['targets'] = deduped + existing
     targets['last_updated'] = datetime.utcnow().isoformat()
     targets['total_count'] = len(targets['targets'])
     targets['new_in_run'] = len(deduped)
-    
+
     with open(targets_path, 'w') as f:
         json.dump(targets, f, indent=2)
-    
+
     return len(deduped)
 
 def run_pipeline(dry_run=False):
     """Run the full ingestion pipeline"""
     log("=== Starting Processor Pipeline ===")
-    
+
     results = {'cves': 0, 'targets': 0, 'breaches': 0, 'errors': []}
-    
+
     # Process fresh data
     if not os.path.exists(FRESH):
         log("No fresh data to process")
         return results
-    
+
     for item_dir in os.listdir(FRESH):
         item_path = os.path.join(FRESH, item_dir)
         if not os.path.isdir(item_path):
             continue
-        
+
         for fname in os.listdir(item_path):
             if not fname.endswith('.json'):
                 continue
-            
+
             fpath = os.path.join(item_path, fname)
             log(f"Processing: {fname}")
-            
+
             try:
                 with open(fpath) as f:
                     data = json.load(f)
-                
+
                 # Route by type
                 if 'cves' in data or 'nvd' in data:
                     cves = data.get('cves', []) + data.get('nvd', []) + data.get('kev', [])
@@ -167,7 +167,7 @@ def run_pipeline(dry_run=False):
                         log(f"  → Merged {merged} new CVEs")
                     else:
                         results['cves'] += len(enriched)
-                
+
                 elif 'targets' in data or 'domains' in data:
                     targets = data.get('targets', []) + data.get('domains', [])
                     enriched = enrich_targets(targets)
@@ -177,23 +177,23 @@ def run_pipeline(dry_run=False):
                         log(f"  → Merged {merged} new targets")
                     else:
                         results['targets'] += len(enriched)
-                
+
                 elif 'breaches' in data:
                     # Process breach data
                     results['breaches'] += len(data['breaches'])
                     log(f"  → {len(data['breaches'])} breach entries")
-                
+
             except Exception as e:
                 results['errors'].append(f"{fname}: {e}")
                 log(f"  ❌ Error processing {fname}: {e}")
-    
+
     log(f"=== Pipeline Complete ===")
     log(f"New CVEs: {results['cves']}")
     log(f"New targets: {results['targets']}")
     log(f"Breach entries: {results['breaches']}")
     if results['errors']:
         log(f"Errors: {len(results['errors'])}")
-    
+
     return results
 
 if __name__ == '__main__':
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     parser.add_argument('--dry-run', action='store_true', help='Preview changes')
     parser.add_argument('--source', type=str, help='Process specific source')
     args = parser.parse_args()
-    
+
     if args.dry_run or args.run or args.source:
         run_pipeline(dry_run=args.dry_run)
     else:

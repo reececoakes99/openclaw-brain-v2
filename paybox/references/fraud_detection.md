@@ -62,7 +62,7 @@ cvv_rules = {
 # AVS Response Codes
 avs_codes = {
     "Y": "Full match",
-    "N": "No match", 
+    "N": "No match",
     "X": "Address unavailable",
     "W": "Street match only",
     "Z": "Postal match only"
@@ -92,18 +92,18 @@ ml_features = {
     "amount_log": "log(amount + 1)",
     "amount_z_score": "standardized amount",
     "amount_vs_avg_merchant": "ratio to merchant mean",
-    
+
     # Frequency features
     "txn_count_1h": "transactions in last hour",
     "txn_count_24h": "transactions in 24h",
     "txn_count_7d": "transactions in 7 days",
     "unique_cards_24h": "distinct cards",
-    
+
     # Device features
     "device_age_days": "first seen to now",
     "device_txn_count": "lifetime txn count",
     "device_risk_score": "device ML model score",
-    
+
     # IP features
     "ip_age_days": "IP first seen to now",
     "ip_txn_count": "lifetime txn count",
@@ -306,14 +306,14 @@ async def evaluate_transaction(payment: Payment) -> RiskResult:
     rule_result = rules_engine.evaluate(payment)
     if rule_result.action == "BLOCK":
         return RiskResult(blocked=True, reason=rule_result.reason)
-    
+
     # 2. ML model (parallel)
     ml_score = ml_model.predict(payment.features)
-    
+
     # 3. 3DS check (if enabled)
     if payment.requires_3ds:
         auth_result = await three_ds.authenticate(payment)
-        
+
     # 4. Combine decisions
     final_score = combine_scores(rule_result, ml_score, auth_result)
     return decide_action(final_score)

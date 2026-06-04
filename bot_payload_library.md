@@ -497,23 +497,23 @@ payload:
   target: <target_domain>
   payload: |
     <actual payload string>
-  
+
   conditions:
     - Target must have: <requirement>
     - Environment: <test/production>
-  
+
   expected:
     success: <what success looks like>
     failure: <what failure looks like>
-  
+
   risk:
     severity: <CRITICAL|HIGH|MEDIUM|LOW>
     detection_risk: <HIGH|MEDIUM|LOW>
     reversibility: <YES|NO|PARTIAL>
-  
+
   testing_notes: |
     <how to test, variations to try>
-  
+
   evidence:
     - screenshot
     - pcap

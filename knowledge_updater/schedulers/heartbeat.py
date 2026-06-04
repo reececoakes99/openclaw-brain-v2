@@ -46,33 +46,33 @@ def check_health():
                 state = json.load(f)
         except:
             pass
-    
+
     issues = []
-    
+
     for spider in ['cve_spider', 'cert_spider', 'changelog_spider', 'darkweb_spider']:
         failures = state.get('failures', {}).get(spider, 0)
         last_run = state.get('last_run', {}).get(spider)
-        
+
         if failures >= 3:
             issues.append(f"❌ {spider}: {failures} consecutive failures")
-        
+
         if last_run:
             last_dt = datetime.fromisoformat(last_run.replace('Z', '+00:00'))
             hours_ago = (datetime.utcnow() - last_dt).total_seconds() / 3600
-            
+
             if spider == 'cve_spider' and hours_ago > 5:
                 issues.append(f"⚠️ {spider}: {hours_ago:.1f}h since last run")
             elif spider == 'cert_spider' and hours_ago > 1:
                 issues.append(f"⚠️ {spider}: {hours_ago:.1f}h since last run")
         else:
             issues.append(f"⚠️ {spider}: never run")
-    
+
     return issues
 
 def check_data_freshness():
     """Check if knowledge base data is stale"""
     stale = []
-    
+
     # Check CVE tracker
     tracker = f"{KBASE}/knowledge/cve_tracker/tracker.json"
     if os.path.exists(tracker):
@@ -87,7 +87,7 @@ def check_data_freshness():
                     stale.append(f"⚠️ CVE tracker: {hours:.1f}h old")
         except:
             stale.append("❌ CVE tracker: corrupted or missing")
-    
+
     # Check active targets
     targets = f"{KBASE}/knowledge/targets/active_targets.json"
     if os.path.exists(targets):
@@ -102,28 +102,28 @@ def check_data_freshness():
                     stale.append(f"⚠️ Active targets: {hours:.1f}h old")
         except:
             pass
-    
+
     return stale
 
 def main():
     log("=== Updater Heartbeat ===")
-    
+
     health_issues = check_health()
     stale_data = check_data_freshness()
-    
+
     if health_issues or stale_data:
         msg = "🔔 Knowledge Updater Status\n\n"
-        
+
         if health_issues:
             msg += "Health Issues:\n" + '\n'.join(health_issues) + "\n\n"
         if stale_data:
             msg += "Stale Data:\n" + '\n'.join(stale_data) + "\n\n"
-        
+
         send_telegram(msg)
         log("Alert sent")
     else:
         log("All systems healthy")
-    
+
     # Count items in updater fresh queue
     fresh_dir = f"{KBASE}/knowledge/updater_fresh"
     if os.path.exists(fresh_dir):

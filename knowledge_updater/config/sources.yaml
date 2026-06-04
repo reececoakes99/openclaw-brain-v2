@@ -1,0 +1,228 @@
+# OpenClaw knowledge updater source registry.
+# API keys are intentionally read from environment variables at runtime; no secrets are stored here.
+version: 1
+updated_by: high_priority_h6
+sources:
+  censys:
+    enabled: true
+    provider: Censys Search v2
+    base_url: https://search.censys.io/api/v2
+    auth:
+      type: basic
+      id_env: CENSYS_API_ID
+      secret_env: CENSYS_API_SECRET
+    rate_limit:
+      requests_per_minute: 60
+      burst: 10
+      retry_after_header: Retry-After
+    endpoints:
+      hosts_search: /hosts/search
+      host: /hosts/{ip}
+      certificates_search: /certificates/search
+    categories:
+      - internet_exposure
+      - certificates
+      - services
+      - autonomous_systems
+      - tls_metadata
+  shodan:
+    enabled: true
+    provider: Shodan REST API
+    base_url: https://api.shodan.io
+    auth:
+      type: query_param
+      param: key
+      token_env: SHODAN_API_KEY
+    rate_limit:
+      requests_per_minute: 60
+      burst: 5
+      retry_after_header: Retry-After
+    endpoints:
+      host: /shodan/host/{ip}
+      host_search: /shodan/host/search
+      dns_domain: /dns/domain/{domain}
+    categories:
+      - internet_exposure
+      - open_ports
+      - service_banners
+      - ssl
+      - vulnerabilities
+  virustotal:
+    enabled: true
+    provider: VirusTotal v3
+    base_url: https://www.virustotal.com/api/v3
+    auth:
+      type: header
+      header: x-apikey
+      token_env: VIRUSTOTAL_API_KEY
+    rate_limit:
+      requests_per_minute: 240
+      burst: 4
+      retry_after_header: x-ratelimit-reset
+    endpoints:
+      domains: /domains/{domain}
+      ips: /ip_addresses/{ip}
+      files: /files/{hash}
+      urls: /urls/{url_id}
+    categories:
+      - malware_reputation
+      - passive_dns
+      - urls
+      - files
+      - iocs
+  netlas:
+    enabled: true
+    provider: Netlas.io API
+    base_url: https://app.netlas.io/api
+    auth:
+      type: header
+      header: X-API-Key
+      token_env: NETLAS_API_KEY
+    rate_limit:
+      requests_per_minute: 120
+      burst: 10
+      retry_after_header: Retry-After
+    endpoints:
+      responses: /responses/
+      domains: /domains/
+      certificates: /certificates/
+    categories:
+      - asset_discovery
+      - dns
+      - certificates
+      - banners
+      - attack_surface
+  fofa:
+    enabled: true
+    provider: FOFA API
+    base_url: https://fofa.info/api/v1
+    auth:
+      type: query_params
+      email_env: FOFA_EMAIL
+      key_env: FOFA_KEY
+    rate_limit:
+      requests_per_minute: 60
+      burst: 3
+      retry_after_header: Retry-After
+    endpoints:
+      search_all: /search/all
+      host: /host/{host}
+    categories:
+      - asset_discovery
+      - fingerprints
+      - ports
+      - titles
+      - protocol_metadata
+  zoomeye:
+    enabled: true
+    provider: ZoomEye API v2
+    base_url: https://api.zoomeye.org
+    auth:
+      type: header
+      header: API-KEY
+      token_env: ZOOMEYE_API_KEY
+    rate_limit:
+      requests_per_minute: 60
+      burst: 5
+      retry_after_header: Retry-After
+    endpoints:
+      host_search: /host/search
+      web_search: /web/search
+    categories:
+      - internet_exposure
+      - service_fingerprints
+      - web_fingerprints
+      - certificates
+  threatbook:
+    enabled: true
+    provider: ThreatBook X Intelligence API
+    base_url: https://api.threatbook.cn/v3
+    auth:
+      type: query_param
+      param: apikey
+      token_env: THREATBOOK_API_KEY
+    rate_limit:
+      requests_per_minute: 120
+      burst: 10
+      retry_after_header: X-RateLimit-Reset
+    endpoints:
+      ip_reputation: /ip/query
+      domain_reputation: /domain/query
+      file_reputation: /file/report
+      ioc: /scene/ioc
+    categories:
+      - threat_reputation
+      - iocs
+      - malware_family
+      - campaign_context
+  projectdiscovery:
+    enabled: true
+    provider: ProjectDiscovery Cloud Platform API
+    base_url: https://api.projectdiscovery.io/v1
+    auth:
+      type: header
+      header: X-API-Key
+      token_env: PROJECTDISCOVERY_API_KEY
+    rate_limit:
+      requests_per_minute: 120
+      burst: 20
+      retry_after_header: Retry-After
+    endpoints:
+      scans: /scans
+      assets: /assets
+      templates: /templates
+      vulnerabilities: /vulnerabilities
+    categories:
+      - vulnerability_templates
+      - scan_results
+      - asset_inventory
+      - exposure_findings
+  firecrawl:
+    enabled: true
+    provider: Firecrawl API v1
+    base_url: https://api.firecrawl.dev/v1
+    auth:
+      type: bearer
+      token_env: FIRECRAWL_API_KEY
+    rate_limit:
+      requests_per_minute: 60
+      burst: 5
+      retry_after_header: Retry-After
+    endpoints:
+      scrape: /scrape
+      crawl: /crawl
+      map: /map
+      extract: /extract
+    categories:
+      - web_content
+      - api_discovery
+      - page_metadata
+      - technology_clues
+  scraperapi:
+    enabled: true
+    provider: ScraperAPI
+    base_url: https://api.scraperapi.com
+    auth:
+      type: query_param
+      param: api_key
+      token_env: SCRAPERAPI_KEY
+    rate_limit:
+      requests_per_minute: 100
+      burst: 10
+      retry_after_header: Retry-After
+    endpoints:
+      proxy: /
+      structured_google: /structured/google/search
+    categories:
+      - resilient_fetch
+      - search_results
+      - anti_bot_handling
+      - public_web_collection
+normalization:
+  timestamp_field: collected_at
+  confidence_range: [0, 100]
+  default_ttl_days:
+    iocs: 30
+    internet_exposure: 7
+    vulnerabilities: 14
+    certificates: 90

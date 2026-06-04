@@ -72,16 +72,16 @@ DLQ_CONFIG = {
 def dlq_handler(channel, method, properties, body):
     msg = json.loads(body)
     routing_key = properties.headers.get("x-original-routing-key", "unknown")
-    
+
     # Log for investigation
     logger.error(f"DLQ message: routing_key={routing_key}, "
                  f"retry_count={properties.headers.get('x-retry-count', 0)}, "
                  f"error={msg.get('error')}")
-    
+
     # Alert on repeated failures
     if properties.headers.get("x-retry-count", 0) >= 3:
         alert_ops(f"Message stuck in DLQ after 3 retries: {routing_key}")
-    
+
     channel.basic_ack(delivery_tag=method.delivery_tag)
 ```
 
@@ -94,9 +94,9 @@ def dlq_handler(channel, method, properties, body):
 def setup_consumer(channel: Channel, queue: str, group_id: str):
     # Each consumer gets a unique consumer_tag
     consumer_tag = f"{group_id}-{socket.gethostname()}-{os.getpid()}"
-    
+
     channel.basic_qos(prefetch_count=10)  # Process 10 msgs concurrently
-    
+
     channel.basic_consume(
         queue=queue,
         consumer_tag=consumer_tag,
@@ -159,8 +159,8 @@ class ReliablePublisher:
     def __init__(self, channel: Channel):
         self.channel = channel
         self.channel.confirm_delivery()  # Enable confirms
-    
-    def publish(self, routing_key: str, message: PaymentMessage, 
+
+    def publish(self, routing_key: str, message: PaymentMessage,
                 mandatory: bool = True, immediate: bool = False):
         properties = pika.BasicProperties(
             delivery_mode=2,           # Persistent
@@ -172,7 +172,7 @@ class ReliablePublisher:
             priority=message.priority,
             reply_to="neopay.payments.auth.response"  # For RPC pattern
         )
-        
+
         try:
             self.channel.publish(
                 exchange="neopay.payments",
@@ -197,17 +197,17 @@ ibm_mq:
     port: 1414
     channel: "NEOPAY.CHANNEL"
     queue_manager: "ACQ_QM"
-    
+
   security:
     cipher_suite: "TLS_AES_256_GCM_SHA384"
     verify_mode: "REQUIRE"
     client_auth: true
-    
+
   queues:
     outbound: "NEOPAY.OUTBOUND.Q"
     inbound: "NEOPAY.INBOUND.Q"
     dlq: "NEOPAY.DLQ"
-    
+
   tuning:
     concurrent_puts: 10
     sync_point: true  # Exactly-once delivery
@@ -244,22 +244,22 @@ rabbitmq:
         port: 5672
       - host: rabbit-3.neopay.internal
         port: 5672
-    
+
     ha_policy:
       mode: "exactly"
       ha-sync-mode: "automatic"
       ha-sync-batch-size: 1
       promotion_policy: "prefer-master"
-  
+
   memory:
     vm_memory_high_watermark: 0.7  # Alert at 70%
     disk_space_low_watermark: 1GB
-  
+
   logging:
     level: warning
     log_file: "/var/log/rabbitmq/rabbitmq.log"
     file_handler_rotation: daily
-  
+
   monitoring:
     prometheus_port: 15692
     metrics_interval: 30s
@@ -272,11 +272,11 @@ rabbitmq:
 class RateLimitedConsumer:
     def __init__(self, max_rps: int):
         self.rate_limiter = TokenBucket(capacity=max_rps, refill_rate=max_rps)
-    
+
     def on_message(self, channel, method, properties, body):
         # Wait for rate limit token
         self.rate_limiter.wait_for_token()
-        
+
         try:
             result = self.process(body)
             channel.basic_ack(delivery_tag=method.delivery_tag)
@@ -289,12 +289,12 @@ class RateLimitedConsumer:
 class BackpressurePublisher:
     def publish(self, routing_key: str, message: PaymentMessage):
         queue_depth = get_queue_depth(routing_key)
-        
+
         if queue_depth > HIGH_WATER_MARK:
             # Apply backpressure
             logger.warning(f"Queue {routing_key} has {queue_depth} messages, slowing down")
             sleep(QUEUE_DEPTH / MAX_RPS)
-        
+
         self._do_publish(routing_key, message)
 ```
 
@@ -308,23 +308,23 @@ def rabbitmq_health_check():
     try:
         # Check connection
         connection = pika.BlockingConnection(RABBITMQ_URL)
-        
+
         # Check each critical queue
         queues = [
             "auth.authorization.request",
             "financial.capture.request",
             "settlement.reconciliation",
         ]
-        
+
         for queue in queues:
             result = connection.channel().queue_declare(
                 queue=queue, durable=True, passive=True
             )
             message_count = result.method.message_count
-            
+
             if message_count > CRITICAL_THRESHOLD:
                 alert_ops(f"Queue {queue} has {message_count} messages (critical)")
-        
+
         connection.close()
         return True
     except Exception as e:

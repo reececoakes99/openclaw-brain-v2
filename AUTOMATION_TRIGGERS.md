@@ -127,7 +127,7 @@ Edit `knowledge/bot_queue/trigger_config.json` to adjust thresholds:
 ```
 knowledge/bot_queue/
 ├── recon_pending.json     # RECON → INTEL queue
-├── intel_scored.json       # INTEL → HUNTER queue  
+├── intel_scored.json       # INTEL → HUNTER queue
 ├── hunter_ready.json       # HUNTER → OPERATIONS queue
 ├── ops_complete.json       # Operations feedback to INTEL
 ├── trigger_config.json     # Trigger thresholds (editable)

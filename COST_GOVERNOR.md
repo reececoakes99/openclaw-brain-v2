@@ -7,7 +7,7 @@
 + **Operating Region:** `ap-southeast-2` (Sydney)
 + **C2 Brain Sync:** `https://github.com/reececoakes99/openclaw-brain-v2.git`
 + **Alerting/C2 Channel:** Telegram User `${OPERATOR_CHAT_ID}` via `@ELKINNBOT` (Token: `${TELEGRAM_BOT_TOKEN}`)
-  
+
 ## Hard Limit
 
 + **$10 per 24-hour period for EXTERNAL APIs.** Local inference via Ollama is UNLIMITED. The external budget is hoarded strictly for specialized third-party services or fallback cloud reasoning.

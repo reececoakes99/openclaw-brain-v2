@@ -189,19 +189,19 @@ hold_release_date = today + 90 days
   1001: Cash - Settlement Account
   1002: Cash - Rolling Reserve
   1100: Accounts Receivable - Merchants
-  
+
 2000-2999: Liabilities
   2001: Settlements Payable
   2002: Rolling Reserve Payable
   2100: Accounts Payable - Schemes
-  
+
 3000-3999: Equity
   3001: Retained Earnings
-  
+
 4000-4999: Revenue
   4001: Transaction Fees
   4002: Monthly Fees
-  
+
 5000-5999: Expenses
   5001: Interchange Expense
   5002: Scheme Fees

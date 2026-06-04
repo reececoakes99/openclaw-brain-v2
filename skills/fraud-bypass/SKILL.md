@@ -123,7 +123,7 @@ async def test_canvas_bypass():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         context = await browser.new_context()
-        
+
         # Inject canvas noise
         await context.add_init_script("""
             const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;

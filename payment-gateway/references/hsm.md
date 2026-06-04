@@ -65,9 +65,9 @@ PIN block:     "1234" + "0000" + "31030606378"
 ### PIN Translation (Format 0 → Format 4)
 ```python
 # Translate from terminal's TPK to acquirer's ZPK via HSM
-def translate_pin_block(pin_block: bytes, 
-                        source_key: bytes, 
-                        dest_key: bytes, 
+def translate_pin_block(pin_block: bytes,
+                        source_key: bytes,
+                        dest_key: bytes,
                         hsm: HSMClient) -> bytes:
     # HSM decrypts under source KEK
     decrypted = hsm.decrypt_pin_block(pin_block, source_key)
@@ -92,12 +92,12 @@ def translate_pin_block(pin_block: bytes,
 def compute_visa_mac(data: bytes, mac_key: bytes) -> bytes:
     # Pad to 8-byte boundary
     data = data + b'\x80' + b'\x00' * ((8 - len(data) % 8) % 8)
-    
+
     result = b'\x00' * 8
     for i in range(0, len(data), 8):
         block = data[i:i+8]
         result = bytes(a ^ b for a, b in zip(result, block))
-    
+
     return des_encrypt(result, mac_key)
 ```
 
@@ -108,7 +108,7 @@ from Crypto.Cipher import DES
 def compute_x919_mac(data: bytes, key: bytes) -> bytes:
     # Pad
     data = data + b'\x80' + b'\x00' * ((8 - len(data) % 8) % 8)
-    
+
     # CBC
     cipher = DES.new(key[:8], DES.MODE_CBC, iv=b'\x00' * 8)
     return cipher.encrypt(data)[-8:]
@@ -126,10 +126,10 @@ Process: 3DES-MAC over EMV tag list (9F02 + 9F03 + 9A + 9C + 9F37 + 9F36 + 95)
 
 ### ARQC Verification (Issuer/HSM)
 ```python
-def verify_arqc(arqc: bytes, 
-                pan: str, 
-                atc: int, 
-                un: bytes, 
+def verify_arqc(arqc: bytes,
+                pan: str,
+                atc: int,
+                un: bytes,
                 amount: int,
                 cryptogram_key: bytes) -> bool:
     # Re-compute using issuer master key + PAN derivated key
@@ -149,19 +149,19 @@ where RC = response code (00=approved, 80=declined)
 ```python
 def key_ceremony_enter():
     """Multi-person key ceremony to load LMK into HSM."""
-    
+
     # Requires quorum (e.g., 3 of 5 key custodians)
     key_shares = []
     for custodian in range(5):
         share = get_custodian_input(f"Enter key share {custodian+1}: ")
         key_shares.append(share)
-    
+
     # Combine shares via Shamir's secret sharing
     lmk = combine_shares(key_shares)
-    
+
     # HSM injects LMK (never exposed in memory)
     hsm.inject_lmk(lmk)
-    
+
     # Verify LMK fingerprint
     fingerprint = hsm.get_lmk_fingerprint()
     print(f"LMK loaded. Fingerprint: {fingerprint}")
@@ -182,16 +182,16 @@ def key_ceremony_verify():
 def inject_tmk_to_terminal(terminal_id: str, tmk: bytes):
     # Get terminal's RSA public key
     terminal_pubkey = terminal_registry.get_pubkey(terminal_id)
-    
+
     # Generate session key for RSA encryption
     session_key = os.urandom(32)
-    
+
     # Encrypt TMK with session key (3DES/AES)
     encrypted_tmk = aes_encrypt(tmk, session_key)
-    
+
     # Encrypt session key with terminal's RSA pubkey
     encrypted_session_key = rsa_encrypt(session_key, terminal_pubkey)
-    
+
     # Send to terminal via SPDH
     send_to_terminal({
         "command": "0200",  # Key injection
@@ -215,26 +215,26 @@ class HSMClient:
     def __init__(self, library: str, slot: int, pin: str):
         self.pkcs11 = PKCS11Lib(library)
         self.session = self.pkcs11.open_session(slot, pin)
-    
+
     def find_key(self, label: str, obj_class: ObjectClass):
         return self.session.find_objects([
             (ObjectClass.LABEL, label),
             (ObjectClass.CLASS, obj_class)
         ])[0]
-    
+
     def decrypt_pin_block(self, pin_block: bytes, key_label: str) -> bytes:
         key = self.find_key(key_label, ObjectClass.SECRET_KEY)
         return self.session.decrypt(pin_block, key)
-    
+
     def encrypt_pin_block(self, plaintext: bytes, key_label: str) -> bytes:
         key = self.find_key(key_label, ObjectClass.SECRET_KEY)
         return self.session.encrypt(plaintext, key)
-    
+
     def compute_mac(self, data: bytes, key_label: str) -> bytes:
         key = self.find_key(key_label, ObjectClass.SECRET_KEY)
         return self.session.sign(data, key, mechanism=Mechanism.MAC_SHA256_HMAC)
-    
-    def translate_pin_block(self, pin_block: bytes, 
+
+    def translate_pin_block(self, pin_block: bytes,
                             source_key: str, dest_key: str) -> bytes:
         # Use HSM vendor-specific mechanism for PIN block translation
         return self.session.single_operation(
@@ -243,11 +243,11 @@ class HSMClient:
             key_out=dest_key,
             data=pin_block
         )
-    
+
     def wrap_key(self, key_to_wrap: bytes, kek_label: str) -> bytes:
         kek = self.find_key(kek_label, ObjectClass.SECRET_KEY)
         return self.session.wrap_key(kek, key_to_wrap)
-    
+
     def unwrap_key(self, wrapped: bytes, kek_label: str) -> bytes:
         kek = self.find_key(kek_label, ObjectClass.SECRET_KEY)
         return self.session.unwrap_key(kek, wrapped)
@@ -261,11 +261,11 @@ def spdh_key_exchange_request(terminal_id: str) -> bytes:
     # Generate ephemeral keypair
     our_private = rsa.generate(2048)
     our_public = our_private.public_key()
-    
+
     # Sign challenge from host
     challenge = get_challenge_from_host(terminal_id)
     signature = rsa_sign(challenge, our_private)
-    
+
     # Send our public key + signature
     return build_message("0800", {
         "terminal_id": terminal_id,
@@ -277,16 +277,16 @@ def spdh_key_exchange_request(terminal_id: str) -> bytes:
 # Host response with session keys encrypted under terminal's public key
 def spdh_key_exchange_response(response_data: bytes) -> dict:
     our_private = load_terminal_private_key()
-    
+
     # Decrypt session keys
     encrypted_session_keys = response_data["encrypted_keys"]
     session_keys = rsa_decrypt(encrypted_session_keys, our_private)
-    
+
     # Install in terminal
     tpk = session_keys[:16]
     tak = session_keys[16:32]
     tdk = session_keys[32:]
-    
+
     return {"tpk": tpk, "tak": tak, "tdk": tdk}
 ```
 
@@ -298,16 +298,16 @@ sequence
     participant OldHSM as Old HSM
     participant NewHSM as New HSM
     participant Ops as Operator
-    
+
     Note over OldHSM,NewHSM: Phase 1: Dual HSM in production
     Ops->NewHSM: Inject new LMK via ceremony
     OldHSM->NewHSM: Translate all keys under both LMKs
-    
+
     Note over TPM: Phase 2: Terminal migration
     Ops->TPM: Send re-encrypted keys (new LMK)
     TPM->NewHSM: Verify key integrity
     TPM->OldHSM: Acknowledge migration
-    
+
     Note over OldHSM: Phase 3: Decommission old HSM
     Ops->OldHSM: Zeroize LMK
 ```

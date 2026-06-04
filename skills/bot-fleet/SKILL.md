@@ -299,7 +299,7 @@ for bot in recon intel hunter operations; do
     echo "ERROR: No last_run for $bot"
     continue
   fi
-  
+
   age=$(($(date +%s) - $(date -d "$last" +%s)))
   if [ "$age" -gt "$MAX_AGE" ]; then
     echo "ALERT: $bot is stale (${age}s old)"
@@ -346,11 +346,11 @@ def restart_bot(bot_name):
         "operations": "neopay/scripts/operations_bot.py",
     }
     log_file = f"knowledge/bot_activity_logs/{bot_name}/error.log"
-    
+
     # Kill any zombie process
     subprocess.run(f"pkill -f {scripts[bot_name]}", shell=True)
     time.sleep(2)
-    
+
     # Restart
     subprocess.Popen(
         ["python3", scripts[bot_name]],
@@ -358,7 +358,7 @@ def restart_bot(bot_name):
         stderr=open(log_file, "a"),
         cwd="/root/.nanobot/workspace/openclaw-brain-v2"
     )
-    
+
     # Update health check
     update_health(bot_name, "active")
 

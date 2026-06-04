@@ -561,10 +561,10 @@ import sqlite3
 conn = sqlite3.connect('reports/sqlite/engagement.db')
 c = conn.cursor()
 c.execute('''
-  INSERT INTO reports 
+  INSERT INTO reports
   (engagement_name, stage, tool_used, output_file, status, timestamp)
   VALUES (?, ?, ?, ?, ?, datetime('now'))
-''', ('<engagement_name>', 10, 'report_gen.py', 
+''', ('<engagement_name>', 10, 'report_gen.py',
        'knowledge/gateway_profiles/<TARGET>/REPORT.md', 'complete'))
 conn.commit()
 conn.close()

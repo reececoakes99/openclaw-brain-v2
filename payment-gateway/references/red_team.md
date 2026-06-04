@@ -472,7 +472,7 @@ Technique 3: Custom Root CA
 
 **Affected Component**: [Component name]
 
-**Description**: 
+**Description**:
 [Detailed description of the vulnerability]
 
 **Attack Scenario**:
@@ -556,7 +556,7 @@ Execution
 ├── T1053: Scheduled Task/Job
 │   └── Queue poison via settlement job
 │
-Persistence  
+Persistence
 ├── T1078: Valid Accounts
 │   └── Unauthorized RabbitMQ producer access
 │

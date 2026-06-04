@@ -29,17 +29,17 @@ def monitor(redis_host='localhost', redis_port=6379, refresh=5):
         try:
             ts = time.strftime('%Y-%m-%d %H:%M:%S')
             errors = alerts = 0
-            
+
             # Scan payment keys
             active = 0; queued = 0; total_time = 0.0; count = 0
             error_codes = {}
-            
+
             for key in r.scan_iter('payment:*:status', count=200):
                 active += 1
-            
+
             for key in r.scan_iter('payment:*:queued', count=200):
                 queued += 1
-            
+
             for key in r.scan_iter('switch:*:txn:*', count=500):
                 try:
                     t = r.hget(key, 'processing_time')
@@ -47,18 +47,18 @@ def monitor(redis_host='localhost', redis_port=6379, refresh=5):
                     ec = r.hget(key, 'error_code')
                     if ec: error_codes[ec] = error_codes.get(ec, 0) + 1
                 except: pass
-            
+
             avg_time = total_time / count if count > 0 else 0
             error_rate = errors / max(active, 1)
-            
+
             alerts_now = []
             if avg_time > ALERT_THRESHOLDS['avg_time']:
                 alerts_now.append(f"⚠ AVG TIME {avg_time:.1f}s > {ALERT_THRESHOLDS['avg_time']}s")
             if queued > ALERT_THRESHOLDS['queue_depth']:
                 alerts_now.append(f"⚠ QUEUE {queued} > {ALERT_THRESHOLDS['queue_depth']}")
-            
+
             top_errors = sorted(error_codes.items(), key=lambda x: -x[1])[:5]
-            
+
             print(f"\n[{ts}]")
             print(f"  Active: {format_num(active)}  Queued: {format_num(queued)}  "
                   f"Avg time: {avg_time:.2f}s  Errors: {error_rate:.1%}")
@@ -66,7 +66,7 @@ def monitor(redis_host='localhost', redis_port=6379, refresh=5):
                 print(f"  Top errors: {', '.join(f'{ec}({cnt})' for ec, cnt in top_errors)}")
             for a in alerts_now:
                 print(f"  {a}")
-            
+
             sys.stdout.flush()
             time.sleep(refresh)
         except KeyboardInterrupt:

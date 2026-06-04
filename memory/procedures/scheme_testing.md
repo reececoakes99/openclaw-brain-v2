@@ -114,7 +114,7 @@ B. Decline scenarios
    4000000000000002 → $2000+ → Insufficient funds
    4000000000000002 → postal_code mismatch → Decline
    5105105105105100 → $2000+ → Decline
-   
+
 C. CVV validation
    Submit correct CVV (123) → approved
    Submit wrong CVV → declined or CVV mismatch
@@ -177,7 +177,7 @@ A. Full refund
    1. Authorize: $100 → approved
    2. Refund: $100 → refund approved
    3. Verify: original transaction credited
-   
+
 B. Partial refund
    1. Authorize: $100 → approved
    2. Partial refund: $50 → partial refund approved

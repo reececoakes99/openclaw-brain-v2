@@ -49,25 +49,25 @@ def check_budget():
     # Load spend log
     with open(SPEND_LOG) as f:
         log = json.load(f)
-    
+
     today = datetime.now().strftime('%Y-%m-%d')
-    
+
     # Reset if new day
     if log.get('date') != today:
         log = {'date': today, 'calls': [], 'total_spend': 0}
-    
+
     # Calculate current spend
     current = log.get('total_spend', 0)
     limit = DAILY_BUDGET
-    
+
     # Hard stop
     if current >= limit:
         return False, f"BUDGET EXHAUSTED: ${current}/${limit}"
-    
+
     # Warning threshold
     if current >= limit * WARN_THRESHOLD:
         return False, f"BUDGET WARNING: ${current}/${limit} (80% threshold)"
-    
+
     return True, f"Approved: ${current}/${limit}"
 
 allow, reason = check_budget()
@@ -101,7 +101,7 @@ def select_model(task_complexity, budget_remaining):
     if budget_remaining < 1.0:
         # Near budget limit — use cheapest
         return 'openrouter/google/gemini-flash-2.0'
-    
+
     if task_complexity == 'high':
         return 'anthropic/claude-sonnet-4-6'
     elif task_complexity == 'medium':
@@ -132,18 +132,18 @@ TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
 
 def log_call(model, input_tokens, output_tokens, cost):
     today = datetime.now().strftime('%Y-%m-%d')
-    
+
     # Load log
     try:
         with open(SPEND_LOG) as f:
             log = json.load(f)
     except:
         log = {'date': today, 'calls': [], 'total_spend': 0}
-    
+
     # Reset if new day
     if log.get('date') != today:
         log = {'date': today, 'calls': [], 'total_spend': 0}
-    
+
     # Add call
     call = {
         'timestamp': datetime.now().isoformat(),
@@ -154,11 +154,11 @@ def log_call(model, input_tokens, output_tokens, cost):
     }
     log['calls'].append(call)
     log['total_spend'] = round(log.get('total_spend', 0) + cost, 4)
-    
+
     # Save log
     with open(SPEND_LOG, 'w') as f:
         json.dump(log, f, indent=2)
-    
+
     # Check warn threshold
     daily_budget = float(os.environ.get('DAILY_BUDGET', '10'))
     if log['total_spend'] >= daily_budget * 0.8:
@@ -174,7 +174,7 @@ def log_call(model, input_tokens, output_tokens, cost):
             urllib.request.urlopen(req, timeout=5)
         except:
             pass
-    
+
     print(f"Logged: {model} | {input_tokens}in/{output_tokens}out | ${cost:.4f} | Total: ${log['total_spend']:.4f}")
 ```
 
@@ -193,10 +193,10 @@ total=$(python3 -c "import json; log=json.load(open('$SPEND_LOG')); print(log.ge
 if (( $(echo "$total >= $DAILY_BUDGET" | bc -l) )); then
     echo "🚨 BUDGET EXHAUSTED: \$$total/\$$DAILY_BUDGET"
     echo "Stopping all non-essential API calls."
-    
+
     # Disable all skills that call APIs
     export API_ENABLED=0
-    
+
     # Alert Telegram
     if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
         curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
@@ -204,11 +204,11 @@ if (( $(echo "$total >= $DAILY_BUDGET" | bc -l) )); then
           -d "text=🚨 Budget exhausted: \$$total/\$$DAILY_BUDGET. All API calls suspended until reset." \
           > /dev/null 2>&1
     fi
-    
+
     # Disable scheduled tasks
     crontab -l | grep -v "cost-governor\|budget" > /tmp/cron.tmp
     crontab /tmp/cron.tmp 2>/dev/null || true
-    
+
     exit 1
 fi
 ```
@@ -232,32 +232,32 @@ def enqueue(task_type, prompt, priority='low'):
         'priority': priority,
         'enqueued_at': datetime.now().isoformat()
     }
-    
+
     # Load existing queue
     try:
         with open(BATCH_QUEUE) as f:
             queue = json.load(f)
     except:
         queue = []
-    
+
     queue.append(queue_item)
-    
+
     with open(BATCH_QUEUE, 'w') as f:
         json.dump(queue, f, indent=2)
-    
+
     return len(queue) - 1
 
 def process_batch():
     """Process queued requests during low-activity window"""
     with open(BATCH_QUEUE) as f:
         queue = json.load(f)
-    
+
     # Only process in off-peak (after work hours)
     hour = datetime.now().hour
     if 8 <= hour <= 22:  # Don't batch during active hours
         print(f"Skipping batch — still in active hours ({hour}:00)")
         return
-    
+
     # Process up to 5 queued items
     processed = 0
     while queue and processed < 5:
@@ -266,10 +266,10 @@ def process_batch():
         # Execute task (call API)
         # ...
         processed += 1
-    
+
     with open(BATCH_QUEUE, 'w') as f:
         json.dump(queue, f, indent=2)
-    
+
     print(f"Batch complete: {processed} items, {len(queue)} remaining")
 
 # Run daily at 22:00

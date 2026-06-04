@@ -23,13 +23,13 @@ class LazyBrowserPool:
         self.browsers = []
         self.max_size = max_size
         self._semaphore = asyncio.Semaphore(max_size)
-    
+
     async def acquire(self):
         await self._semaphore.acquire()
         if self.browsers:
             return self.browsers.pop()
         return await self._launch()
-    
+
     async def release(self, browser):
         self.browsers.append(browser)
         self._semaphore.release()

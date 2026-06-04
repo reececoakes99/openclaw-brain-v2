@@ -37,3 +37,9 @@ Corrections, insights, and knowledge gaps captured during operations.
 - **Pattern-Key**: iso20022-uetr
 - **Learning**: Some ISO20022 processors validate UETR (Unique End-to-End Transaction Reference) format strictly. Use proper UUID v4 format.
 - **Source**: neopay/scripts/iso20022_converter.py
+## Self-Improvement Engine
+### [2026-06-04] Repository Hygiene Automation
+- **Pattern-Key**: self-improvement-repo-hygiene
+- **Learning**: Parsed 1 recurring error pattern(s), detected 17 current issue(s), and applied 62 deterministic safe fix(es).
+- **Source**: pipeline/self_improvement.py
+- **Prevention**: Run `python3 pipeline/self_improvement.py --apply` before commits that modify pipeline, updater, skill, or bot files.

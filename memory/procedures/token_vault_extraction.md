@@ -38,7 +38,7 @@ Attack:
    for i in {000000..999999}; do
      check /api/token/tok_xxx$i
    done
-   
+
 2. Map token → account by observing:
    - Response time (token exists vs 404)
    - Error message differences
@@ -138,7 +138,7 @@ Vulnerability: Vault session tokens are stored in memory or logged insecurely.
 Attack:
 1. SQL injection in vault query log
    SELECT token, pan FROM detokenize_log WHERE timestamp > ...
-   
+
 2. Memory dump during detokenization
    - Capture running process memory
    - Extract: plaintext tokens, session keys, master key

@@ -75,7 +75,7 @@ class MITMProxy:
                               f"encoding={parsed.get('encoding','?')} | fields={parsed.get('fields',[])}")
                         print(f"    hex: {data[:64].hex()}")
                         dst.sendall(data)
-                        entry = {'ts': ts2, 'dir': direction, 'len': len(data), 
+                        entry = {'ts': ts2, 'dir': direction, 'len': len(data),
                                  'mti': parsed.get('mti'), 'hex': data.hex()}
                         self.transactions.append(entry)
                     except Exception as e:

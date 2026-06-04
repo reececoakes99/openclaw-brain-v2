@@ -87,18 +87,18 @@ def get_transactions(account_id: str, token: str) -> list[Transaction]:
 ### PISP API Example
 ```python
 class PISPClient:
-    def initiate_payment(self, 
+    def initiate_payment(self,
                          aspsp_id: str,
                          amount: Decimal,
                          creditor_iban: str,
                          creditor_name: str,
                          remittance: str) -> PaymentInitiation:
-        
+
         # Check ASPSP supports SEPA SCT
         aspsp = self.aspsp_registry.get(aspsp_id)
         if "sepa_sct" not in aspsp.services:
             raise UnsupportedService(f"ASPSP {aspsp_id} doesn't support SEPA SCT")
-        
+
         payload = {
             "instructedAmount": {
                 "amount": str(amount),
@@ -114,7 +114,7 @@ class PISPClient:
             "remittanceInformationUnstructured": remittance,
             "requestedExecutionDate": date.today().isoformat()
         }
-        
+
         resp = self.session.post(
             f"{aspsp.api_url}/v1/payments/sepa-credit-transfers",
             json=payload,
@@ -125,15 +125,15 @@ class PISPClient:
                 "PSU-ID": self.psu_id
             }
         )
-        
+
         payment_id = resp.headers["Location"].split("/")[-1]
-        
+
         return PaymentInitiation(
             payment_id=payment_id,
             status="RCVD",  # Received
             aspsp_redirect_url=resp.json()["scaRedirect"]["redirect"]
         )
-    
+
     def poll_payment_status(self, payment_id: str) -> PaymentStatus:
         resp = self.session.get(
             f"{self.aspsp_url}/v1/payments/sepa-credit-transfers/{payment_id}",
@@ -145,11 +145,11 @@ class PISPClient:
 def handle_payment_status_webhook(payload: dict):
     payment_id = payload["paymentId"]
     status = payload["status"]  # ACSC=AcceptedSettled, ACSP=Accepted, RJCT=Rejected
-    
+
     payment = Payment.objects.get(neopay_id=payment_id)
     payment.psp_status = status
     payment.save()
-    
+
     if status == "ACSC":
         payment.complete()
         send_webhook_to_merchant(payment.merchant, payment)
@@ -312,10 +312,10 @@ Settlement in < 10 seconds, 24/7/365.
 
 ### SCT Inst Flow
 ```python
-def initiate_sepa_instant(amount: Decimal, 
+def initiate_sepa_instant(amount: Decimal,
                           creditor_iban: str,
                           creditor_bic: str) -> InstantPayment:
-    
+
     payload = {
         "instructedAmount": {"amount": str(amount), "currency": "EUR"},
         "creditorAccount": {"iban": creditor_iban},
@@ -323,7 +323,7 @@ def initiate_sepa_instant(amount: Decimal,
         "remittanceInformationUnstructured": "Payment",
         "requestedExecutionDate": "2024-05-05"
     }
-    
+
     resp = requests.post(
         f"{ASPSP_URL}/v1/payments/sepa-instant-credit-transfers",
         json=payload,
@@ -333,7 +333,7 @@ def initiate_sepa_instant(amount: Decimal,
             "Idempotency-Key": idempotency_key
         }
     )
-    
+
     # Poll for immediate settlement confirmation
     payment_id = resp.json()["paymentId"]
     for attempt in range(10):
@@ -350,12 +350,12 @@ def initiate_sepa_instant(amount: Decimal,
 ```python
 # Neopay Open Banking Gateway
 class OpenBankingGateway:
-    
+
     def __init__(self):
         self.aspsp_registry = ASPSPRegistry()  # Bank configs
         self.consent_store = ConsentStore()      # PSU consents
         self.token_vault = TokenVault()           # AISP/PISP access tokens
-    
+
     def register_pisp(self, pisp_id: str, public_key: bytes):
         """Register a PISP client for open banking."""
         # Store public key for request signing
@@ -364,21 +364,21 @@ class OpenBankingGateway:
             "qtsp_certificate": load_qtsp_cert(pisp_id),
             "capabilities": ["sepa_sct", "sepa_sct_inst", "sepa_sdd"]
         }
-    
-    def initiate_psd2_consent(self, 
-                               aspsp_id: str, 
+
+    def initiate_psd2_consent(self,
+                               aspsp_id: str,
                                psu_id: str,
                                scopes: list[str]) -> ConsentRequest:
         """Create consent object at ASPSP."""
         aspsp = self.aspsp_registry.get(aspsp_id)
-        
+
         consent = self.consent_store.create(
             psu_id=psu_id,
             aspsp_id=aspsp_id,
             scopes=scopes,  # ["accounts", "balances", "transactions"]
             expiration=timedelta(days=90)
         )
-        
+
         # Build redirect to ASPSP consent page
         redirect_url = build_consent_redirect(
             aspsp.consent_url,
@@ -387,14 +387,14 @@ class OpenBankingGateway:
             scope=" ".join(scopes),
             state=consent.state
         )
-        
+
         return ConsentRequest(redirect_url=redirect_url, consent_id=consent.id)
-    
+
     def execute_pisp_payment(self, payment: Payment) -> PISPResult:
         """Execute payment via PISP."""
         aspsp = self.aspsp_registry.get(payment.aspsp_id)
         access_token = self.token_vault.get_token(payment.psu_id, aspsp_id)
-        
+
         # Build ISO20022 pacs.008
         mx_message = build_pacs008(
             amount=payment.amount,
@@ -402,7 +402,7 @@ class OpenBankingGateway:
             creditor_name=payment.creditor_name,
             end_to_end_id=payment.id
         )
-        
+
         resp = requests.post(
             f"{aspsp.api_url}/v1/payments/sepa-credit-transfers",
             json=mx_message,
@@ -413,7 +413,7 @@ class OpenBankingGateway:
                 "Idempotency-Key": payment.idempotency_key
             }
         )
-        
+
         return PISPResult(
             psp_payment_id=extract_payment_id(resp),
             status="RCVD",
@@ -427,11 +427,11 @@ Two variants: CORE (B2C) and B2B.
 
 ```python
 # Initiate SDD mandate
-def create_sdd_mandate(customer_iban: str, 
+def create_sdd_mandate(customer_iban: str,
                        customer_name: str,
                        creditor_iban: str,
                        mandate_id: str) -> Mandate:
-    
+
     # Build pain.009 mandate request
     mandate_msg = build_mandate(
         creditor_iban=creditor_iban,
@@ -439,23 +439,23 @@ def create_sdd_mandate(customer_iban: str,
         debtor_name=customer_name,
         mandate_id=mandate_id
     )
-    
+
     # Submit to ASPSP
     resp = requests.post(f"{ASPSP}/v1/mandates", json=mandate_msg)
     return Mandate(mandate_id=mandate_id, status="RCVD", aspsp_mandate_id=resp["mandateId"])
 
 # Collect SDD
-def collect_sdd(mandate: Mandate, 
+def collect_sdd(mandate: Mandate,
                 amount: Decimal,
                 collection_date: date) -> Collection:
-    
+
     # Build camt.054 / pacs.004 collection request
     collection = build_sdd_collection(
         mandate_id=mandate.aspsp_id,
         amount=amount,
         collection_date=collection_date
     )
-    
+
     resp = requests.post(f"{ASPSP}/v1/direct-debits", json=collection)
     return Collection(id=resp["id"], status="PDNG")
 

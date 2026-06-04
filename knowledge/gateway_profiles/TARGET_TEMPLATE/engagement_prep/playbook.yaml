@@ -414,16 +414,16 @@ cleanup_procedure:
 # ============================================================
 notes: |
   This playbook is for authorized security testing only.
-  
+
   All testing complys with PCI DSS v4.0 requirements for
   penetration testing, including:
-  
+
   - Defined scope and boundaries
   - Skilled assessors
   - Maximum impact on production systems
   - Proper cleanup procedures
   - Comprehensive reporting
-  
+
   Review abort conditions before each phase.
   Update payload selection based on tech stack findings.
   Document all findings with timestamps for timeline tracking.

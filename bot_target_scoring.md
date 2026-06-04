@@ -265,7 +265,7 @@ for target in active_targets:
         target.target_value * 0.25 +
         target.exposure_level * 0.20
     ) * 100
-    
+
     if score >= 700:
         target.priority = 'P1'
         target.queue = 'HUNTER_URGENT'

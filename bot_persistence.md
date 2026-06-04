@@ -16,7 +16,7 @@ Every successful exploitation is useless without persistence. You get in, you es
 ```
 Target: Payment gateway admin panel
 Method: Register new account + privilege escalation
-Tools: 
+Tools:
   - Burp Suite for privilege manipulation
   - SQL injection to create admin directly
   - API key generation via admin functions
@@ -28,7 +28,7 @@ Reliability: HIGH
 **2. API Key Harvesting**
 ```
 Target: Internal payment API
-Method: 
+Method:
   - Extract from environment variables if shell access gained
   - Sniff API keys from intercepted traffic
   - Generate new keys via admin API
@@ -200,11 +200,11 @@ persistence_mechanism:
     How to use this persistence:
     1. <step>
     2. <step>
-  
+
   cleanup: |
     How to remove (for legal/compliance purposes):
     1. <step>
-  
+
   evidence:
     - <screenshot of creation>
     - - <config file showing persistence>

@@ -47,17 +47,17 @@ Before attacking HSM:
    - Port scan: 18443 (PayShield), 9999 (legacy)
    - Check SSL certificate banner for HSM type
    - Look for HSM vendor-specific HTTP headers
-   
+
 2. Identify management interface exposure
    - Is SSH open on HSM management port?
    - Is there an unguarded serial console?
    - Does cloud HSM have exposed PKCS#11 endpoint?
-   
+
 3. Map key hierarchy
    - Identify if ZMK (Zone Master Key) is in use
    - Determine key hierarchy: ZMK → TMK → KEK → Data keys
    - Check for key versioning / rotation schedule
-   
+
 4. Identify command interface
    - HSO commands visible in network traffic?
    - API commands for cloud HSM?
@@ -69,7 +69,7 @@ Before attacking HSM:
 ### 1. ZMK Interception via Lazy Loading
 
 ```
-Vulnerability: Some HSM configurations load ZMK from secure memory 
+Vulnerability: Some HSM configurations load ZMK from secure memory
 on transaction start, leaving plaintext in RAM during operation.
 
 Attack:
@@ -133,7 +133,7 @@ Attack:
    - For each candidate PAN: TPAD ⊕ PIN ⊕ PAN = encrypted
    - Compare to captured block
    - When match found: PIN = TPAD ⊕ encrypted ⊕ PAN
-   
+
 3. Use HSM simulator to accelerate brute force:
    python3 neopay/scripts/pin_block.py --mode brute-force \
      --pin-block <encrypted_hex> --pan-suffix <last4>
@@ -197,7 +197,7 @@ Attack:
 2. If gateway accepts DES variant, you may be able to:
    - Downgrade to weak key length (56-bit)
    - Exploit weak DES key exchange (meet-in-middle)
-   
+
 Protection: Enforce 3DES or AES-128 minimum in key exchange
 ```
 

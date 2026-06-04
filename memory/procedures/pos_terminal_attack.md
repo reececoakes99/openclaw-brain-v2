@@ -88,7 +88,7 @@ Exploit chain:
 ### XFlow Firmware Injection
 
 ```
-Vulnerability: Some XFlow implementations allow firmware update without 
+Vulnerability: Some XFlow implementations allow firmware update without
 authentication if terminal is in "maintenance mode."
 
 Attack:

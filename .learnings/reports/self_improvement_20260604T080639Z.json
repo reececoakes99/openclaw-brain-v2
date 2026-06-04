@@ -1,0 +1,455 @@
+{
+  "applied_fixes": [
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "AUTOMATION_TRIGGERS.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "COST_GOVERNOR.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "IDENTITY.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "OpenClaw_Brain_V2_Analysis_Report.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "bot_payload_library.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "bot_persistence.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "bot_target_scoring.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "memory/CAMPAIGN_TRACKER.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "self-improving-agent/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "knowledge/gateway_profiles/TARGET_TEMPLATE/engagement_prep/playbook.yaml"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "knowledge_updater/pipelines/processor.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "knowledge_updater/schedulers/cron_scheduler.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "knowledge_updater/schedulers/heartbeat.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "knowledge_updater/scrapers/cve_spider.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "knowledge_updater/scrapers/darkweb_spider.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "memory/methodologies/README.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "memory/procedures/checkout_injection.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "memory/procedures/hsm_attack.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "memory/procedures/pos_terminal_attack.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "memory/procedures/scheme_testing.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "memory/procedures/token_vault_extraction.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "memory/procedures/webhook_hijack.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/references/hsm.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/references/pos_protocols.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/references/connectors.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/bot_monitor.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/crypto_downgrade.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/echo_server.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/fingerprinter.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/load_tester.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/mitm_proxy.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/pcap_tools.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/replay_engine.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/scripts/stress_tester.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/assets/kubernetes/01-configmap.yaml"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "neopay/assets/test_data/sample_messages.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "paybox/references/fraud_detection.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "paybox/references/ledger.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "payment-gateway/references/database.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "payment-gateway/references/hsm.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "payment-gateway/references/kubernetes.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "payment-gateway/references/messaging.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "payment-gateway/references/pci_dss.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "payment-gateway/references/red_team.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "payment-gateway/references/sepa_psd2.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "payment-gateway/references/terraform.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "self-improving-agent/references/examples.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "self-improving-agent/references/openclaw-integration.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/bot-fleet/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/business-logic-auditor/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/campaign-manager/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/cost-governor/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/fraud-bypass/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/ollama-connector/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/ollama-connector/ollama_client.py"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/payment-scanner/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/pipeline-runner/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/stored-value-auditor/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/telegram-alert/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/threat-intel/SKILL.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/playwrights/references/performance_tuning.md"
+    },
+    {
+      "category": "trailing_whitespace",
+      "description": "Removed trailing whitespace",
+      "path": "skills/playwrights/references/scaling.md"
+    }
+  ],
+  "findings": [
+    {
+      "category": "python_indent_width",
+      "line": 11,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "apply_h6.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 187,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/capability_harvester.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 7,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "knowledge_updater/pipelines/processor.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 7,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "knowledge_updater/schedulers/cron_scheduler.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 10,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "knowledge_updater/scrapers/cert_spider.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 6,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "neopay/scripts/clearing_settlement.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 6,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "neopay/scripts/iso20022_converter.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 6,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "neopay/scripts/qr_payments_connector.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 10,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "neopay/scripts/spdh_client.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 9,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/agent/capability_updater.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 59,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/stages/stage10_output.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 30,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/stages/stage1_osint.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 26,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/stages/stage2_asset_discovery.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 25,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/stages/stage3_crawling.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 58,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/stages/stage5_extraction.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 8,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/stages/stage7_distributed.py",
+      "severity": "medium"
+    },
+    {
+      "category": "python_indent_width",
+      "line": 33,
+      "message": "Leading spaces are not a multiple of four",
+      "path": "pipeline/stages/stage8_darkweb.py",
+      "severity": "medium"
+    }
+  ],
+  "generated_at": "2026-06-04T08:06:39.355072+00:00",
+  "git_head": "453128a4872f655b5d326a3262a47a102869a08c",
+  "patterns": [
+    {
+      "commands": [
+        "<command that failed>"
+      ],
+      "component": "<component>",
+      "kind": "<error_type>",
+      "last_seen": "YYYY-MM-DD",
+      "occurrences": 1,
+      "pattern_key": "error-type-component-diagnosis-how-to-avoid-in-future-7dd46494",
+      "preventions": [
+        "<how to avoid in future>"
+      ],
+      "root_causes": [
+        "<diagnosis>"
+      ]
+    }
+  ]
+}

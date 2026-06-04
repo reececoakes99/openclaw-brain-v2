@@ -231,6 +231,7 @@ All ISO8583 interactions are logged to:
 - `neopay/scripts/parse_iso8583.py` — message parser
 - `bot_hunter.md` — HUNTER bot deployment
 - `neopay/references/iso8583.md` — protocol reference
+- `neopay/references/live_iso8583_tools.md` — live authorized-tool integration workflow
 
 ## Troubleshooting
 

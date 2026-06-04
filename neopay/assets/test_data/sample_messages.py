@@ -12,12 +12,12 @@ import struct, secrets
 def make_hiso93_message(mti, fields):
     """Build HISO93 binary message"""
     msg = struct.pack('!H', mti)  # 2-byte MTI big-endian
-    
+
     # Build primary bitmap (byte 0 = bits 1-8, byte 7 = bits 64-72)
     primary = bytearray(8)
     secondary = None
     has_secondary = False
-    
+
     for field_num, value in sorted(fields.items()):
         if 1 <= field_num <= 64:
             byte_idx = (field_num - 1) // 8
@@ -31,14 +31,14 @@ def make_hiso93_message(mti, fields):
             byte_idx = (field_num - 65) // 8
             bit_idx = (field_num - 65) % 8
             secondary[byte_idx] |= (0x80 >> bit_idx)
-    
+
     msg += bytes(primary)
     if has_secondary:
         msg += bytes(secondary)
-    
+
     # Add fixed-length fields (standard positions)
     field_order = [2, 3, 4, 7, 11, 12, 13, 14, 15, 17, 18, 19, 22, 23, 25, 32, 35, 37, 38, 41, 42, 43, 49, 50, 52, 53, 54, 57, 58, 59, 60, 61, 62, 63]
-    
+
     # Add field data
     for fn, val in sorted(fields.items()):
         if isinstance(val, bytes):
@@ -47,7 +47,7 @@ def make_hiso93_message(mti, fields):
             msg += val.encode('ascii')
         elif isinstance(val, int):
             msg += str(val).encode('ascii')
-    
+
     return msg
 
 # Authorization Request (0100)
@@ -199,7 +199,7 @@ def generate_auth_message(mti='0100', amount='000000001000', currency='840', pan
         pan = generate_random_pan()
     rrn = ''.join([str(secrets.randbelow(10)) for _ in range(12)])
     stan = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
-    
+
     return {
         'mti': mti,
         'pan': pan,

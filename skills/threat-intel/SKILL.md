@@ -156,7 +156,7 @@ Primary Payment Providers:
 ```bash
 # Search breach databases for payment provider mentions
 for provider in "stripe" "braintree" "adyen" "worldpay" "square"; do
-  echo "=== Checking $provider ===" 
+  echo "=== Checking $provider ==="
   curl -s -H "hibp-api-key: $HIBP_API_KEY" \
     "https://haveibeenpwned.com/api/v3/breach/${provider}" \
     | jq '{name, breachDate, pwnCount, dataClasses}'
@@ -170,7 +170,7 @@ done
 for target in /root/.nanobot/workspace/openclaw-brain-v2/knowledge/gateway_profiles/*/; do
   TARGET_NAME=$(basename "$target")
   USED_PROVIDERS=$(jq -r '.payment_providers[]?' "$target/provider_info.json" 2>/dev/null)
-  
+
   for provider in $USED_PROVIDERS; do
     BREACH_STATUS=$(check_provider_breach "$provider")
     if [ "$BREACH_STATUS" == "BREACHED" ]; then
@@ -203,7 +203,7 @@ Monitor for these patterns in paste sites, forums, and dumps:
 GIFT-\d{16}-\d{4}
 GC_\d{12}_[A-Z0-9]{8}
 
-# Loyalty/points program patterns  
+# Loyalty/points program patterns
 LOYALTY-\d{10}
 POINTS-\d{4}-\d{6}
 ```
@@ -248,10 +248,10 @@ ANGLER_PATTERNS=(
   "window.atob"   # Base64 decode in Angler
 )
 
-# Neutrino EK patterns  
+# Neutrino EK patterns
 NEUTRINO_PATTERNS=(
   "neutrino" "neutrino-ek" "n3utr1n0" "boson"
-  "cookie.*neutrino" "neutrino_rc" 
+  "cookie.*neutrino" "neutrino_rc"
 )
 
 # RIG EK patterns
@@ -316,7 +316,7 @@ When a breach mention is found:
   "scan_type": "scheduled_6h",
   "sources_checked": [
     "haveibeenpwned",
-    "pastebin_monitoring", 
+    "pastebin_monitoring",
     "dark_web_forums",
     "marketplace_patterns"
   ],
@@ -395,27 +395,27 @@ When a breach mention is found:
     Date: 2024-08-15 | Records: 340,000
     Data: Email addresses, Merchant IDs, API credentials
     Status: VERIFIED
-    
+
 [+] Checking Stripe-related breaches...
-[!] BREACH FOUND: "StripeDeveloperForum"  
+[!] BREACH FOUND: "StripeDeveloperForum"
     Date: 2024-10-22 | Records: 89,000
     Data: Email addresses, Hashed passwords, 2FA tokens
     Status: VERIFIED
-    
+
 [+] Correlating with active targets...
 [+] TARGET-ALPHA: Uses Adyen — MATCH FOUND ⚠️
     Correlation: Merchant ID prefix "ADY-" matches target-alpha profile
     Escalation: P1 — API credentials potentially exposed
-    
+
 [+] TARGET-BETA: No provider match (uses Authorize.Net only)
 [+] TARGET-GAMMA: Uses Stripe — MATCH FOUND ⚠️
     Correlation: Developer forum account email matches target-gamma infrastructure
     Escalation: P2 — Monitor for credential stuffing attempts
-    
+
 [+] Telegram alerts sent:
     - P1: Target-alpha + Adyen breach
     - P2: Target-gamma + Stripe breach
-    
+
 [+] Tracker updated: knowledge/breach_correlation/tracker.json
 [✓] Intel scan complete. 2 provider breaches, 2 linked targets, 1 P1, 1 P2.
 ```

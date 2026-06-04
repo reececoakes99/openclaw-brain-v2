@@ -1,9 +1,9 @@
 # SKILL: telegram-alert
 
-**Name**: Real-Time Communications with Reece via Telegram Bot  
-**Type**: Notification / Command Interface  
-**Trigger**: Startup, alert generation, command received from Reece, health check  
-**Confidence**: OPERATIONAL — Fully implemented  
+**Name**: Real-Time Communications with Reece via Telegram Bot
+**Type**: Notification / Command Interface
+**Trigger**: Startup, alert generation, command received from Reece, health check
+**Confidence**: OPERATIONAL — Fully implemented
 
 ---
 
@@ -128,23 +128,23 @@ COOLDOWN = int(os.getenv("TELEGRAM_ALERT_COOLDOWN", "60"))
 
 def send_alert(alert_type, target, summary, evidence_path=None, priority="LOW"):
     """Send Telegram alert with rate limiting and queue fallback."""
-    
+
     # Rate limiting check
     if priority != "HIGH" and priority != "ESCALATION":
         last_send = _get_last_send_time(alert_type)
         if last_send and (datetime.now() - last_send).seconds < COOLDOWN:
             _log_warning(f"Rate limited: {alert_type} alert suppressed")
             return False
-    
+
     # Build message
     emoji_map = {
         "heartbeat": "💓", "finding": "🔍", "escalation": "🚨",
         "completion": "✅", "error": "❌"
     }
     emoji = emoji_map.get(alert_type, "📌")
-    
+
     msg_id = f"{alert_type[:3]}-{hashlib.md5(str(datetime.now()).encode()).hexdigest()[:8]}"
-    
+
     message = f"""{emoji} [{alert_type.upper()}] {target}
 
 {summary}
@@ -156,7 +156,7 @@ def send_alert(alert_type, target, summary, evidence_path=None, priority="LOW"):
     # Attempt send
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
-    
+
     try:
         resp = requests.post(url, json=payload, timeout=10)
         resp.raise_for_status()
@@ -171,7 +171,7 @@ def _queue_alert(message, alert_type):
     """Queue failed alert for retry."""
     pending_dir = Path("knowledge/alerts/pending")
     pending_dir.mkdir(parents=True, exist_ok=True)
-    
+
     filename = f"{alert_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
     (pending_dir / filename).write_text(message)
 
@@ -192,10 +192,10 @@ def get_updates(offset=None):
     params = {"timeout": 30, "limit": 5}
     if offset:
         params["offset"] = offset
-    
+
     resp = requests.get(url, params=params, timeout=35)
     data = resp.json()
-    
+
     if data.get("ok"):
         return data.get("result", [])
     return []
@@ -204,15 +204,15 @@ def parse_commands():
     """Parse incoming commands from Reece."""
     updates = get_updates()
     commands = []
-    
+
     for update in updates:
         msg = update.get("message", {})
         text = msg.get("text", "").strip()
-        
+
         if text.startswith("/"):
             cmd = text[1:].split()[0].lower()
             args = text.split()[1:]
-            
+
             commands.append({
                 "command": cmd,
                 "args": args,
@@ -220,7 +220,7 @@ def parse_commands():
                 "message_id": update.get("update_id"),
                 "timestamp": msg.get("date")
             })
-    
+
     return commands
 
 # Supported commands
@@ -237,7 +237,7 @@ COMMANDS = {
 def handle_command(cmd_obj):
     """Execute command and return response text."""
     cmd = cmd_obj["command"]
-    
+
     if cmd == "status":
         return _cmd_status()
     elif cmd == "budget":
@@ -313,7 +313,7 @@ process_pending() {
     local count=0
     for file in "$PENDING_DIR"/*.txt; do
         [ -e "$file" ] || continue
-        
+
         # Check age
         age=$(($(date +%s) - $(stat -c %Y "$file")))
         if [ $age -gt $((MAX_AGE_HOURS * 3600)) ]; then
@@ -321,13 +321,13 @@ process_pending() {
             mv "$file" "$SENT_DIR/EXPIRED_$(basename $file)"
             continue
         fi
-        
+
         # Try send
         content=$(cat "$file")
         resp=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
             -d "{\"chat_id\":\"${TELEGRAM_CHAT_ID}\",\"text\":\"${content}\",\"parse_mode\":\"Markdown\"}")
-        
+
         if echo "$resp" | grep -q '"ok":true'; then
             mv "$file" "$SENT_DIR/$(basename $file)"
             echo "Sent: $file"
@@ -355,21 +355,21 @@ def send_to_groups(message, alert_type="info"):
         os.getenv("TELEGRAM_CHAT_ID"),
         os.getenv("TELEGRAM_SECONDARY_CHAT_ID"),
     ]
-    
+
     results = {}
     for chat_id in chat_ids:
         if not chat_id:
             continue
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         payload = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
-        
+
         try:
             resp = requests.post(url, json=payload, timeout=10)
             results[chat_id] = resp.status_code == 200
         except Exception as e:
             results[chat_id] = False
             _log_error(f"Group send failed for {chat_id}: {e}")
-    
+
     return results
 
 # Send escalation to primary + secondary

@@ -1,0 +1,71 @@
+# Scraping and update cadence for knowledge updater orchestration.
+version: 1
+timezone: UTC
+cadences:
+  critical:
+    description: Fast-moving sources that affect prioritization, IOC reputation, or active exposure.
+    interval: hourly
+    cron: "7 * * * *"
+    jitter_seconds: 300
+    max_runtime_minutes: 45
+    sources:
+      - virustotal
+      - threatbook
+      - projectdiscovery
+      - shodan
+    categories:
+      - iocs
+      - vulnerabilities
+      - internet_exposure
+  standard:
+    description: Daily broad refresh for asset and web intelligence sources.
+    interval: daily
+    cron: "23 2 * * *"
+    jitter_seconds: 900
+    max_runtime_minutes: 180
+    sources:
+      - censys
+      - netlas
+      - fofa
+      - zoomeye
+      - firecrawl
+      - scraperapi
+    categories:
+      - asset_discovery
+      - certificates
+      - service_fingerprints
+      - web_content
+  deep:
+    description: Weekly deep correlation and expensive collection runs.
+    interval: weekly
+    cron: "41 3 * * 0"
+    jitter_seconds: 1800
+    max_runtime_minutes: 480
+    sources:
+      - censys
+      - shodan
+      - virustotal
+      - netlas
+      - fofa
+      - zoomeye
+      - threatbook
+      - projectdiscovery
+      - firecrawl
+      - scraperapi
+    categories:
+      - attack_surface
+      - passive_dns
+      - vulnerability_templates
+      - campaign_context
+      - knowledge_graph_updates
+pipeline:
+  output_directory: knowledge/updater_fresh
+  state_file: knowledge/bot_queue/knowledge_updater_state.json
+  dead_letter_file: knowledge/bot_queue/dead_letter.json
+  deduplication:
+    fuzzy_threshold: 0.88
+    timestamp_resolution: newest_wins
+  enrichment:
+    cve_cache: knowledge/cve_tracker/tracker.json
+    mitre_attack_cache: knowledge/threat_intel/mitre_attack.json
+    threat_feed_cache: knowledge/threat_intel/ioc_feeds.json

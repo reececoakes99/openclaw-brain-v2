@@ -18,10 +18,10 @@ Automated payment gateway discovery and surface analysis. Identifies gateway typ
 ```
 1. Check for known gateway signatures in page source
    curl -s https://target.com/ | grep -i "stripe\|braintree\|adyen\|square\|vantiv\|fiserv\|worldpay"
-   
+
 2. Check JavaScript files for payment SDK imports
    curl -s https://target.com/ | grep -oE 'src="[^"]*\.js"' | grep -i "stripe\|braintree\|checkout\|payment"
-   
+
 3. Check for iframe patterns (hosted payment pages)
    curl -s https://target.com/ | grep -oiE '<iframe[^>]+src="[^"]*"' | head -10
 
@@ -255,7 +255,7 @@ python3 neopay/scripts/parse_iso8583.py --probe <host>:<port>
 
 # Identify dialect from response header format
 # HISO93: 2-byte binary length
-# HISO87: 4-byte ASCII length  
+# HISO87: 4-byte ASCII length
 # VBI: Variable length indicator
 ```
 

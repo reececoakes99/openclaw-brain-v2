@@ -5,7 +5,7 @@ This directory contains documented TTPs (Tactics, Techniques, Procedures) organi
 ## Categories
 
 - `web/` — Web application attack techniques
-- `network/` — Network exploitation procedures  
+- `network/` — Network exploitation procedures
 - `payment/` — Payment-specific attack methodologies
 - `physical/` — Physical security testing
 - `osint/` — OSINT collection frameworks

@@ -88,15 +88,15 @@ def save_state(state):
 def get_status(spider_name):
     """Get status of a spider"""
     state = load_state()
-    
+
     last_run = state.get('last_run', {}).get(spider_name)
     failures = state.get('failures', {}).get(spider_name, 0)
     running = state.get('running', {}).get(spider_name, False)
-    
+
     status = 'RUNNING' if running else 'STOPPED'
     if failures >= 3:
         status = 'FAILED'
-    
+
     return {
         'name': spider_name,
         'status': status,
@@ -111,16 +111,16 @@ def run_spider(spider_name):
     state = load_state()
     cfg = SCHEDULES[spider_name]
     script_path = f"{KBASE}/knowledge_updater/{cfg['script']}"
-    
+
     if not os.path.exists(script_path):
         log(f"Script not found: {script_path}", 'ERROR')
         return False
-    
+
     state['running'][spider_name] = True
     save_state(state)
-    
+
     log(f"Starting {spider_name}...")
-    
+
     try:
         result = subprocess.run(
             [sys.executable, script_path],
@@ -128,7 +128,7 @@ def run_spider(spider_name):
             capture_output=True,
             text=True
         )
-        
+
         if result.returncode == 0:
             state['last_run'][spider_name] = datetime.utcnow().isoformat()
             state['failures'][spider_name] = 0
@@ -136,39 +136,39 @@ def run_spider(spider_name):
         else:
             state['failures'][spider_name] = state['failures'].get(spider_name, 0) + 1
             log(f"{spider_name} failed: {result.stderr[:200]}", 'ERROR')
-            
+
             # Alert after 3 failures
             if state['failures'][spider_name] >= 3:
                 log(f"ALERT: {spider_name} has failed {state['failures'][spider_name]} times", 'ERROR')
                 send_alert(spider_name, result.stderr[:500])
-        
+
     except subprocess.TimeoutExpired:
         state['failures'][spider_name] = state['failures'].get(spider_name, 0) + 1
         log(f"{spider_name} timed out after {cfg['timeout']}s", 'ERROR')
-        
+
     except Exception as e:
         state['failures'][spider_name] = state['failures'].get(spider_name, 0) + 1
         log(f"{spider_name} error: {e}", 'ERROR')
-    
+
     finally:
         state['running'][spider_name] = False
         save_state(state)
-    
+
     return result.returncode == 0
 
 def send_alert(spider_name, error):
     """Send Telegram alert on spider failure"""
     token = os.environ.get('TELEGRAM_BOT_TOKEN')
     chat_id = os.environ.get('TELEGRAM_CHAT_ID', '')
-    
+
     if not token:
         return
-    
+
     msg = f"⚠️ Knowledge Updater Alert\n"
     msg += f"Spider: {spider_name}\n"
     msg += f"Error: {error[:200]}\n"
     msg += f"Time: {datetime.utcnow().isoformat()}"
-    
+
     try:
         import urllib.request, json
         data = json.dumps({'chat_id': chat_id, 'text': msg}).encode()
@@ -187,12 +187,12 @@ def run_all_now():
     results = {}
     for name in SCHEDULES:
         results[name] = run_spider(name)
-    
+
     log(f"=== Run Complete ===")
     for name, success in results.items():
         status = "✅" if success else "❌"
         log(f"{status} {name}")
-    
+
     return results
 
 def show_status():
@@ -202,7 +202,7 @@ def show_status():
         s = get_status(name)
         enabled = '🔴' if SCHEDULES[name].get('always_on') else '🟡'
         status_icon = '🔄' if s['status'] == 'RUNNING' else ('❌' if s['status'] == 'FAILED' else '⏸️')
-        
+
         print(f"\n{enabled} {status_icon} {name}")
         print(f"   Schedule: {s['cron']}")
         print(f"   Description: {s['description']}")
@@ -210,7 +210,7 @@ def show_status():
         print(f"   Failures: {s['failures']}")
         if s['last_run']:
             print(f"   Last run: {s['last_run']}")
-    
+
     print()
 
 def main():
@@ -222,9 +222,9 @@ def main():
     parser.add_argument('--run-now', action='store_true', help='Run all scrapers immediately')
     parser.add_argument('--logs', action='store_true', help='Show recent log entries')
     parser.add_argument('--spider', type=str, help='Run specific spider')
-    
+
     args = parser.parse_args()
-    
+
     if args.status:
         show_status()
     elif args.run_now:

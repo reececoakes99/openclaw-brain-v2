@@ -2,15 +2,8 @@
 
 ---
 
-## KiloClaw Environment
+## Openclaw Environment
 
-- **Platform:** KiloClaw (Fly.io isolated single-tenant VPS)
-- **OS:** Debian Bookworm (slim)
-- **Volume mount:** `/root` — backed by snapshots, install all dependencies here
-- **Workspace:** `/root/.openclaw/workspace`
-- **Kilo CLI:** `kilo` — interactive: `kilo` / autonomous: `kilo run --auto "task"`
-- **Config:** `/root/.config/kilo/opencode.json`
-- **Do not modify:** `/root/.kilo`
 
 ---
 
@@ -21,30 +14,6 @@
 
 ---
 
-## Networking
-
-- **Tailscale IP:** ${TAILSCALE_IP}
-- **Git identity:** reececoakes99 / reececoakes99@users.noreply.github.com
-
----
-
-## API Configuration
-
-- **Primary model:** `anthropic/claude-sonnet-4-6`
-- **Fallback 1:** `openrouter/anthropic/claude-sonnet-4-6`
-- **Fallback 2:** `openrouter/meta-llama/llama-3.3-70b-instruct`
-- **Spend cap:** $10 per 24-hour period — hard limit
-- **Cost governor:** See `COST_GOVERNOR.md`
-
----
-
-## Telegram
-
-- **Bot handle:** @Elkinlochbot
-- **Operator chat ID:** ${OPERATOR_CHAT_ID}
-- **Pending alerts:** `~/.openclaw/alerts/pending/` — retry every 5 min if unreachable
-
----
 
 ## Bot Fleet Tools
 

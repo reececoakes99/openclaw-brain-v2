@@ -33,7 +33,7 @@ Every heartbeat must include ALL fields:
 
 🖥️ System Health
    CPU: [x]% | RAM: [x]% | Disk: [x]% | GPU: [x]%
-  🧠 Local Engine: [deepseek-r1-abliterated:32b] — Status: [active/throttled]
+  🧠 Local Engine: (Elkinn) — Status: [active/throttled]
   🌐 Egress: [Proxy-ID] | IP: [Masked] | Health: [x]%
   🎯 Confidence
    [score]/10 — [one-line reasoning]
@@ -47,7 +47,7 @@ Every heartbeat must include ALL fields:
    ARCHIVIST: [standby/active/error] — last: [time]
 
 💰 Budget
-   API spend today: $[x]/$10 (Hoarded)
+   API spend: No Limit 
    Local Compute Cycles: [x]
 
   🕐 State: [IDLE/ACTIVE/DEGRADED/STEALTH/CRITICAL]
@@ -68,7 +68,7 @@ IDLE → ACTIVE
    Action: Switch to 6-hour heartbeat, compress payload, minimize egress
 
  ACTIVE → DEGRADED
-   Trigger: API limits reached, >20% packet loss, or sub-bot failure
+   Trigger: >20% packet loss, or sub-bot failure
    Action: Switch to 10-minute heartbeat, halt active engagements, wait for diagnostics
 
  IDLE / ACTIVE / DEGRADED → CRITICAL
@@ -110,9 +110,9 @@ Confidence: [score]/10
 Action taken: [immediate response]
 Request: [what Operator needs to decide]
 Time: [timestamp]
-+ Auth: [HMAC-SHA256 Signature]
 
-No buffering. No waiting. Send immediately.
+
+No buffering. No waiting. Send immediately.Display Results.
 
 ---
 
